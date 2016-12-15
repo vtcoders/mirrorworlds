@@ -69,9 +69,10 @@ css_files = $(sort $(wildcard etc/*.css) $(built_css_files))
 
 # files we install in public
 # TODO: Is this required to be a flat single directory?
-public_files = $(js_files) $(css_files)\
+public_files = $(sort $(js_files) $(css_files)\
  $(wildcard public/mw/*)\
- $(x3dom_dir) public/mw/avatars
+ public/mw/enviro-object.js\
+ $(x3dom_dir) public/mw/avatars)
 
 # files we install in etc/
 etc_files = $(keys)
@@ -79,6 +80,7 @@ etc_files = $(keys)
 
 built_files = $(sort\
  bin\
+ public/mw/enviro-object.js\
  mw_server lib/mw_server bin/mw_server\
  $(built_js_files)\
  $(built_css_files)\
@@ -107,6 +109,9 @@ bin/mw_server: bin
 
 mw_server:
 	ln -s lib/mw_server $@
+
+public/mw/enviro-object.js:
+	ln -s ../../lib/enviro-object.js $@
 
 lib/mw_server: lib/mw_server.js GNUmakefile config.make
 	(mkdir -p lib &&\
@@ -156,7 +161,7 @@ install: mkdirs build
 	cp -R lib/* $(PREFIX)/lib/
 	cp -R $(public_files) $(PUBLIC)/mw/
 	cp -R public/index.html $(PUBLIC)/
-	ln -fs $(PREFIX)/lib/mw_server $(BIN)/mw_server
+	ln -fs ../lib/mw_server $(BIN)/mw_server
 	rm $(PREFIX)/lib/mw_server.js
 
 clean:
