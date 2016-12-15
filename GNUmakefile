@@ -150,11 +150,11 @@ $(x3dom_dir):
 	echo "/* This is a generated file */" > $@ &&\
 	$(csscompress) $^ >> $@
 mkdirs:
-	mkdir -p $(ETC) $(BIN) $(PUBLIC)/mw $(MODULES)
+	mkdir -p $(ETC) $(BIN) $(PUBLIC)/mw $(MODULES) $(PREFIX)/lib
 
 install: mkdirs build
 	cp -R $(etc_files) $(ETC)/
-	cp -R lib/ $(PREFIX)/
+	cp -R lib/* $(PREFIX)/lib/
 	cp -R $(public_files) $(PUBLIC)/mw/
 	cp -R public/index.html $(PUBLIC)/
 	ln -fs $(PREFIX)/lib/mw_server $(BIN)/mw_server
