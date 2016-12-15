@@ -41,23 +41,25 @@ function configureScene()
     
     //Add listener to lamp button
     var lampToggle = document.getElementById("lampToggle");
+
+    if (lampToggle != "undefined") {
     
-    lampToggle.addEventListener('click', function(e)
-    {
-        console.log("You toggled the lamp!");
+        lampToggle.addEventListener('click', function(e) {
+            console.log("You toggled the lamp!");
         
-        socket.emit('environmentChange', "lamp1");
-    });
+            socket.emit('environmentChange', "lamp1");
+        });
     
-    //Add listener to lamp button
-    var lampToggle2 = document.getElementById("lampToggle2");
+        //Add listener to lamp button
+        var lampToggle2 = document.getElementById("lampToggle2");
     
-    lampToggle2.addEventListener('click', function(e)
-    {
-        console.log("You toggled the lamp!");
+        lampToggle2.addEventListener('click', function(e)
+        {
+            console.log("You toggled the lamp!");
         
-        socket.emit('environmentChange', "lamp2");
-    });
+            socket.emit('environmentChange', "lamp2");
+        });
+    }
 }
 
 //-------------------------------------------------------
