@@ -1,0 +1,43 @@
+<Viewpoint id="firstPerson" set_bind="true" position='2 1.5 5' orientation='0 1 0 0'></Viewpoint>
+                    
+                <Group id="avatarGroup"></Group>
+			</Scene>
+		</X3D>
+	</div>
+
+	<br>
+
+	<div id="info">
+		<b>People currently observing this model:</b>
+		<span id="users">Loading...</span>
+	</div>
+	
+    <div id="sidebar">
+        
+        <button id="maxButton" style="visibility: hidden" class="minmaxB"><b> < </b></button>
+        <button id="minButton" style="visibility: visible" class="minmaxB"><b> > </b></button>
+        
+            <div id="content" style="visibility: visible">
+                <br>
+                <span style="padding: 10px;">Toolbar</span>
+                <div id="toolbar">
+                    <span>Select an Avatar:<br></span>
+                    <select id="selectAvatar">
+                        <option value="mw/avatars/pumba.x3d">Warthog</option>
+                        <option value="mw/avatars/teapot.x3d">Teapot</option>
+                        <option value="mw/avatars/pumbaGreen.x3d">Green Warthog</option>
+                        <option value="mw/avatars/pumbaBlue.x3d">Blue Warthog</option>
+                    </select>
+                </div>
+                
+            <span style="padding-left: 10px;">Scene Chat</span>
+            <div id="messageBlock">
+                <ul id="messages"></ul>
+                <input id="inputField" autocomplete="off" />
+                <button id="sendButton">Send</button>
+            </div>
+        </div>
+        
+    </div>    
+</body>
+</html>
