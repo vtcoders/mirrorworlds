@@ -43,7 +43,6 @@ ETC = $(PREFIX)/etc
 # Files that this package installs that are seen on the web.
 PUBLIC = $(PREFIX)/public
 
-
 #######################################################################
 #######################################################################
 
@@ -51,22 +50,29 @@ PUBLIC = $(PREFIX)/public
 # and put them in this directory
 node_modules = lib/node_modules
 
-built_js_files = $(patsubst %.jsp,%.js,$(wildcard public/*.jsp))
-built_css_files = $(patsubst %.cs,%.css,$(wildcard public/*.cs))
+# TODO: We are currently assuming that the generated compressed
+# javaScript and CSS files are in one directory.  If that changes
+# we need to change built_js_files and built_css_files
+built_js_files = $(patsubst %.jsp,%.js,$(wildcard public/mw/*.jsp))
+built_css_files = $(patsubst %.cs,%.css,$(wildcard public/mw/*.cs))
 
 keys = etc/key.pem etc/cert.pem
 
 # version of x3dom to install
 x3dom_version = x3dom-1.7.1
 # The directory where we unzip the x3dom files
-x3dom_dir = public/x3dom
+x3dom_dir = public/mw/x3dom
+
+js_files = $(sort $(wildcard etc/*.js) $(built_js_files))
+css_files = $(sort $(wildcard etc/*.css) $(built_css_files))
 
 
 # files we install in public
 # TODO: Is this required to be a flat single directory?
 public_files = $(js_files) $(css_files)\
- $(wildcard public/*.htm public/*.png public/*.jpg)\
- $(x3dom_dir)
+ $(wildcard\
+ public/mw/*.htm public/mw/*.html public/mw/*.png public/mw/*.jpg)\
+ $(x3dom_dir) public/mw/avatars/
 
 # files we install in etc/
 etc_files = $(keys)
@@ -82,10 +88,6 @@ built_files = $(sort\
  $(node_modules))
 
 sep = /////////////////////////////////////////////////////\n
-
-js_files = $(sort $(wildcard etc/*.js) $(built_js_files))
-css_files = $(sort $(wildcard etc/*.css) $(built_css_files))
-
 
 
 build: $(built_files)
@@ -148,13 +150,14 @@ $(x3dom_dir):
 	echo "/* This is a generated file */" > $@ &&\
 	$(csscompress) $^ >> $@
 mkdirs:
-	mkdir -p $(ETC) $(BIN) $(PUBLIC) $(MODULES)
+	mkdir -p $(ETC) $(BIN) $(PUBLIC)/mw $(MODULES)
 
 install: mkdirs build
 	cp -R $(etc_files) $(ETC)/
-	cp -R lib/ $(PREFIX)/lib
-	cp -R $(public_files) $(PUBLIC)/
-	ln -fs ../lib/mw_server $(BIN)/mw_server
+	cp -R lib/ $(PREFIX)/
+	cp -R $(public_files) $(PUBLIC)/mw/
+	cp -R public/index.html $(PUBLIC)/
+	ln -fs $(PREFIX)/lib/mw_server $(BIN)/mw_server
 	rm $(PREFIX)/lib/mw_server.js
 
 clean:
