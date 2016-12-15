@@ -72,7 +72,7 @@ css_files = $(sort $(wildcard etc/*.css) $(built_css_files))
 public_files = $(js_files) $(css_files)\
  $(wildcard\
  public/mw/*.htm public/mw/*.html public/mw/*.png public/mw/*.jpg)\
- $(x3dom_dir) public/mw/avatars/
+ $(x3dom_dir) public/mw/avatars
 
 # files we install in etc/
 etc_files = $(keys)
