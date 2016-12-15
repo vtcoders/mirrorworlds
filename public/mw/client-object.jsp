@@ -19,7 +19,6 @@ var spawnOrientation = [{"x": 0, "y": 1, "z": 0}, 0];
 var avatarType = "avatars/pumba.x3d";
 var x3d;
 
-
 //-------------------------------------------------------
 /*
  * Sets up the X3D scene
@@ -47,7 +46,17 @@ function configureScene()
     {
         console.log("You toggled the lamp!");
         
-        socket.emit('environmentChange');
+        socket.emit('environmentChange', "lamp1");
+    });
+    
+    //Add listener to lamp button
+    var lampToggle2 = document.getElementById("lampToggle2");
+    
+    lampToggle2.addEventListener('click', function(e)
+    {
+        console.log("You toggled the lamp!");
+        
+        socket.emit('environmentChange', "lamp2");
     });
 }
 
@@ -240,9 +249,28 @@ function init()
      *
      * @param fullListOfUsers - the list of connected users
      */
-    socket.once('firstupdate', function(fullListOfUsers)
+    socket.once('firstupdate', function(fullListOfUsers, enviroStates)
     {
     
+   	for (var eKey in enviroStates) {
+            
+	    var curr = enviroStates[eKey];
+
+	    console.log(curr);
+
+	    var newEnviro;
+
+	    switch (curr.type) {
+
+	        case "lamp":
+		    newEnviro = new Lamp(curr.name, curr.lampOn);
+		    break;
+	    }
+
+	    newEnviro.updateClient();
+
+        }
+
         //Add your own Name and information to fullListOfUsers
 	if(fullListOfUsers[0] === undefined) {
 		
@@ -425,10 +453,10 @@ function init()
     socket.on('newmessage', function(userName, message)
     {
 	var newMessage = document.createElement('li');
-	
+
 	var nameTag = document.createElement('span');
 	nameTag.innerHTML = "<em>" + userName + "</em>";
-	
+
 	newMessage.appendChild(nameTag);
 	newMessage.appendChild(document.createElement("br"));
 	newMessage.appendChild(document.createTextNode(message));
@@ -456,21 +484,22 @@ function init()
     /*
      * Triggered when someone toggles the lamp in the scene
      */
-    socket.on('toggleLamp', function() {
     
-        var lightBulb = document.getElementById("light");
-        var mat = lightBulb.getElementsByTagName("Material");
-    
-        var status = mat[0].getAttribute("diffuseColor");
-        var color2 = ".95, .9, .25"
-        
-        if (status == color2) {
-            mat[0].setAttribute("diffuseColor", ".64 .69 .72");
-        } else {
-            mat[0].setAttribute("diffuseColor", color2);
-        }
-    });
+    socket.on('updateEnvironment', function(eName, eState, eType) {
+      
+    	var newEnviro;
 
+	switch (eType) {
+	
+	    case "lamp":
+	    newEnviro = new Lamp(eName, eState);
+	    break;
+	
+	}
+
+    	newEnviro.updateClient();
+    });
+    
     //-------------------------------------------------------
     /*
      * Toggle Camera View 
@@ -499,4 +528,3 @@ function init()
 
     configurePage();
 }
-

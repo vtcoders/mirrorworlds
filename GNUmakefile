@@ -70,8 +70,7 @@ css_files = $(sort $(wildcard etc/*.css) $(built_css_files))
 # files we install in public
 # TODO: Is this required to be a flat single directory?
 public_files = $(js_files) $(css_files)\
- $(wildcard\
- public/mw/*.htm public/mw/*.html public/mw/*.png public/mw/*.jpg)\
+ $(wildcard public/mw/*)\
  $(x3dom_dir) public/mw/avatars
 
 # files we install in etc/
