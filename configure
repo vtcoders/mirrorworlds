@@ -137,10 +137,10 @@ while [ -n "$1" ] ; do
             ;;
         --node)
             shift 1
-            shabang="#!${1}"
+            shabang="\\#!${1}"
             ;;
         --node=*)
-            shabang="#!${1#*-node=}"
+            shabang="\\#!${1#*-node=}"
             ;;
         --no-compress)
             jscompress=
