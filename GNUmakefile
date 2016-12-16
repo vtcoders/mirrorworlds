@@ -160,7 +160,6 @@ install: mkdirs build
 	cp -R $(etc_files) $(ETC)/
 	cp -R lib/* $(PREFIX)/lib/
 	cp -R $(public_files) $(PUBLIC)/mw/
-	cp -R public/index.html $(PUBLIC)/
 	ln -fs ../lib/mw_server $(BIN)/mw_server
 	rm $(PREFIX)/lib/mw_server.js
 
