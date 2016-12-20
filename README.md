@@ -43,6 +43,15 @@ The Mirror Worlds server is installed as mw_server in the directory
 for help.
 
 
+#### Example:
+
+From a bash shell:
+```mw_server --doc_root ${HOME}/public_html\
+--http_port=3333 > access.log 2> error.log &
+```
+
+
+
 ## Developer Notes
 
 
