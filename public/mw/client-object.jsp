@@ -38,28 +38,27 @@ function configureScene()
     //Add listener to camera to update server with location data
     var cam = document.getElementById('firstPerson');
     cam.addEventListener('viewpointChanged', positionUpdated);
-    
-    //Add listener to lamp button
-    var lampToggle = document.getElementById("lampToggle");
 
-    if (lampToggle != "undefined") {
-    
+
+    //Add listener to lamp button
+    var lampToggle = document.getElementById("mw__lampToggle");
+
+    if (lampToggle)
         lampToggle.addEventListener('click', function(e) {
             console.log("You toggled the lamp!");
         
             socket.emit('environmentChange', "lamp1");
         });
     
-        //Add listener to lamp button
-        var lampToggle2 = document.getElementById("lampToggle2");
-    
-        lampToggle2.addEventListener('click', function(e)
-        {
+    //Add listener to lamp button
+    var lampToggle2 = document.getElementById("mw__lampToggle2");
+
+    if(lampToggle2)
+        lampToggle2.addEventListener('click', function(e) {
             console.log("You toggled the lamp!");
         
             socket.emit('environmentChange', "lamp2");
         });
-    }
 }
 
 //-------------------------------------------------------
@@ -73,9 +72,7 @@ function configurePage()
     
     selectAvatar.addEventListener('change', function() {
         
-    var avatarType = selectAvatar.value;
-        
-        socket.emit('newavatar', name, avatarType);
+        socket.emit('newavatar', name, selectAvatar.value);
     });
     
     //Initialize buttons and listeners for chat function
@@ -227,8 +224,32 @@ function updateList(updateUser)
  * Start up client side operations
  */
 function init()
-{ 
+{
+
+    var model = document.getElementById('mw_model')
+    if(!model) {
+        alert('X3D <inline id=mw_model> was not found');
+        return;
+    }
+    // default model
+    // TODO: make this url path more relative so it works with URL=file://
+
+
+    if(location.search.match(/.*(\?|\&)file=.*/) != -1)
+        var url = location.search.replace(/.*(\?|\&)file=/,'').replace(/\&.*$/g, '');
+
+    if(typeof url == undefined || url.length < 1)
+        // The default model // This is the only place that we declare
+        // this.
+        var url = '/mw/example.x3d';
+
+    model.url = url;
+
     name = prompt("Enter your name:");
+
+    if(name === null || name.length < 1)
+        // TODO: do more for this case
+        return;
 
     socket = new io.connect('');
 

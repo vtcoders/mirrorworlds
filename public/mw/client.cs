@@ -1,39 +1,40 @@
 body {
     margin: 0 auto;
-	font: 13px Helvetica, Arial; 
+    font: 13px Helvetica, Arial;
 }
 
 p {
-	margin-top:0;
-	margin-bottom:0
+    margin-top:0;
+    margin-bottom:0
+}
+
+#main {
+    width: auto;
+    height: 100%;
 }
 
 #x3d {
-    max-height: 80%;
-    max-width: 90%;
-    min-height: 400px;
+    height: 80%;
+    max-width: 100%;
+    min-height: 300px;
     min-width: 700px;
     border: none;
-}
-
-#x3dContent {
-    height: 100%;
     width: 100%;
 }
 
 #info {
     display: inline-block;
-    max-height: height: 20%;
-    min-height: 200px;
-    margin-top: 10px;
-    margin-left: 5px;
+    background-color: #CECEE7;
+    height: 20%;
+    width: 100%;
+    min-height: 120px;
 }
 
 #sidebar {
     position: absolute;
     width: 300px;
     top: 0;
-	right: 0;
+    right: 0;
     bottom: 0;
 }
 
@@ -44,14 +45,15 @@ p {
 
 #minButton {
     visibility: visible;
+    cursor: pointer;
 }
 
 .minmaxB {
-	position: fixed;
+    position: fixed;
     display: inline-block;
     height: 100%;
-	padding-left: 10px;
-	padding-right: 10px;
+    padding-left: 7px;
+    padding-right: 7px;
     background: #DDD;
     border: none;
 }
@@ -64,7 +66,7 @@ p {
     padding: 0;
     width: 273px;
     visibility: visible;
-	background: #FFF;
+    background-color: rgba(200,200,253,0.7);
 }
 
 #toolbar {
@@ -73,41 +75,41 @@ p {
 }
 
 #messageBlock {
-	position: fixed;
+    position: fixed;
     width: 100%;
     top: 200px;
     bottom: 0;
 }
 
 #messages {
-	list-style-type: none; 
-	margin: 0; 
-	padding: 0;
+    list-style-type: none; 
+    margin: 0; 
+    padding: 0;
     top: 0;
 }
 
 #messages li {
-	padding: 5px 10px;
+    padding: 5px 10px;
 }
 
 #messages li:nth-child(odd) { 
-	background: #eee; 
+    background: #eee; 
 }
 
 #inputField {
-	position: absolute;
-	bottom: 10px;
-	left: 10px;
-	width: 190px;
-	height: 25px;
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    width: 190px;
+    height: 25px;
 }
 
 #sendButton { 
-	position: fixed;
-	bottom: 10px;
+    position: fixed;
+    bottom: 10px;
     right: 10px;
     height: 30px;
-	width: 50px;
-	background: rgb(130, 224, 255);
-	border: none;
+    width: 50px;
+    background: rgb(130, 224, 255);
+    border: none;
 }

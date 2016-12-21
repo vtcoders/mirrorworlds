@@ -97,6 +97,7 @@ build: $(built_files)
 $(node_modules):
 	cd lib/ && npm install
 
+
 config.make:
 	echo "# This is a generated file" > $@
 
