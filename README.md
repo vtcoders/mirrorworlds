@@ -94,7 +94,7 @@ always be give and take.  ref: https://gist.github.com/branneman/8048520
 ### Bugs:
 
 - When a new user connects and there are already users in the scene, the
-  new user isn’t seeing where everybody really is at first. All other
+  new user is not seeing where everybody really is at first. All other
   users are being rendered from the spawn location
 - Random semi colon in the middle of the x3d scene
 - Headlights on avatars (should be fixed when we add new avatars)
