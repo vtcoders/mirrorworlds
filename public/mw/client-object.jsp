@@ -94,23 +94,23 @@ function configurePage()
     var sidebarContent = document.getElementById("content");
     
     minButton.addEventListener('click', function(e) {
-		
-        if (content.style.visibility != "hidden") {
+
+        if (sidebarContent.style.visibility != "hidden") {
                                
-	    content.style.visibility = "hidden";
+	    sidebarContent.style.visibility = "hidden";
             minButton.style.visibility = "hidden";
 	    maxButton.style.visibility = "visible";
 			
         }
     });
-    
+
     maxButton.addEventListener('click', function(e) {
         
         if (maxButton.style.visibility != 'hidden') {
                                
             maxButton.style.visibility = "hidden";
             minButton.style.visibility = "visible";
-            content.style.visibility = "visible";
+            sidebarContent.style.visibility = "visible";
                                
         }
     });
