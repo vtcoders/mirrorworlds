@@ -70,7 +70,7 @@ always be give and take.  ref: https://gist.github.com/branneman/8048520
    the package be installed.  The structure of the source files is close
    to that of the installed files.
 
-3. We decided it have the package installation be automated.
+3. We decided to have the package installation be automated.
 
 
 ### Profiling
