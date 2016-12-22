@@ -21,8 +21,8 @@
 <PointLight ambientIntensity="1" on="true" color="1 1 1" />
 
 <Transform>
-  <Transform DEF="pumba" >
-   <Transform >
+  <Transform DEF="pumba" rotation='0 1 0 3.1415926'>
+      <Transform scale='.2 .2 .2'>
    <Transform DEF="Group10988" translation="3.29316e-005 -0.213885 -0.422129" >
     <Transform translation="-3.29316e-005 0.213885 0.422129" >
     <Group DEF="Group10988_geometry">
