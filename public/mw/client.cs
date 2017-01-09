@@ -23,7 +23,6 @@ p {
 }
 
 #info {
-    display: inline-block;
     background-color: #CECEE7;
     height: 20%;
     width: 100%;
@@ -41,6 +40,7 @@ p {
 #maxButton {
     visibility: hidden;
     right: 0;
+    cursor: pointer;
 }
 
 #minButton {
@@ -50,7 +50,6 @@ p {
 
 .minmaxB {
     position: fixed;
-    display: inline-block;
     height: 100%;
     padding-left: 7px;
     padding-right: 7px;

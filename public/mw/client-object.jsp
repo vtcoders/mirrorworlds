@@ -92,26 +92,32 @@ function configurePage()
     var minButton = document.getElementById("minButton");
     var maxButton = document.getElementById("maxButton");
     var sidebarContent = document.getElementById("content");
+    var sidebar = document.getElementById("sidebar");
     
     minButton.addEventListener('click', function(e) {
 
         if (sidebarContent.style.visibility != "hidden") {
-                               
+
 	    sidebarContent.style.visibility = "hidden";
             minButton.style.visibility = "hidden";
 	    maxButton.style.visibility = "visible";
-			
+
+            sidebar.style.pointerEvents = "none";
+            sidebarContent.style.pointerEvents = "none";
+            maxButton.style.pointerEvents = "all";
         }
     });
 
     maxButton.addEventListener('click', function(e) {
         
         if (maxButton.style.visibility != 'hidden') {
-                               
+
             maxButton.style.visibility = "hidden";
             minButton.style.visibility = "visible";
             sidebarContent.style.visibility = "visible";
-                               
+
+            sidebar.style.pointerEvents = "all";
+            sidebarContent.style.pointerEvents = "all";
         }
     });
 }
