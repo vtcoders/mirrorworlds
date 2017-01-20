@@ -90,6 +90,10 @@ always be give and take.  ref: https://gist.github.com/branneman/8048520
   - probably need some other kind of event besides turning on a light
 - New Avatars (more compact and less warthoggy)
 - Increase Efficiency (some lag with multiple users)
+- Integrate Blobserver
+  - unify Blobserver (take data feeds from blob trackers) and MasterServer
+  - add blob handling and drawing
+- Move production to dev.mirrorworlds.icat.edu
 
 ### Bugs:
 
