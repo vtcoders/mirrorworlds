@@ -7,6 +7,11 @@ hostname = $(shell hostname)
 # if it does not exist.
 -include config.make
 
+# By adding .ONESHELL: all the lines in a recipe are passed to a single
+# invocation of the shell
+.ONESHELL:
+
+
 #######################################################################
 #          DEFAULT CONFIGURATION
 #
@@ -93,7 +98,8 @@ sep = /////////////////////////////////////////////////////\n
 
 build: $(built_files)
 
-# We npm get a copy of socket.io and dependencies
+# We npm get a copy of socket.io and other dependencies
+# via the file lib/package.json
 $(node_modules):
 	cd lib/ && npm install
 
@@ -104,13 +110,17 @@ config.make:
 bin:
 	mkdir -p bin
 
+# Make it so we may run mw_server from a path in bin/
 bin/mw_server: bin
 	mkdir -p bin
 	ln -s ../lib/mw_server $@
 
+# Make it so we may run mw_server from the top source dir.
 mw_server:
 	ln -s lib/mw_server $@
 
+# This javaScript is used by the client and the nodeJS server,
+# so we install a symlink so it's accessible from two paths.
 public/mw/enviro-object.js:
 	ln -s ../../lib/enviro-object.js $@
 
