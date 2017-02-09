@@ -15,9 +15,9 @@
  
 var socket;
 var name;
-var spawnPosition = {"x": 2, "y": 1.5, "z": 1};
-var spawnOrientation = [{"x": 0, "y": 1, "z": 0}, 0];
-var avatarType = "avatars/pumba.x3d";
+var spawnPosition = {"x": 25, "y": 0, "z": 11};
+var spawnOrientation = [{"x": 0, "y": 0, "z": 0}, 0];
+var avatarType = "avatars/teapot.x3d";
 var x3d;
 
 //-------------------------------------------------------
@@ -40,26 +40,32 @@ function configureScene()
     var cam = document.getElementById('firstPerson');
     cam.addEventListener('viewpointChanged', positionUpdated);
 
+    //var lampToggle = document.getElementById("mw_model");
 
     //Add listener to lamp button
     var lampToggle = document.getElementById("mw__lampToggle");
+    console.log(lampToggle);
 
     if (lampToggle)
+
+        console.log("Adding Event Listener");
         lampToggle.addEventListener('click', function(e) {
             console.log("You toggled the lamp!");
         
-            socket.emit('environmentChange', "lamp1");
+            socket.emit('environmentChange');
         });
     
     //Add listener to lamp button
-    var lampToggle2 = document.getElementById("mw__lampToggle2");
+    /*var lampToggle2 = document.getElementById("lampToggle2");
 
     if(lampToggle2)
+        console.log("Adding Event Listener");
         lampToggle2.addEventListener('click', function(e) {
+            
             console.log("You toggled the lamp!");
         
             socket.emit('environmentChange', "lamp2");
-        });
+    });*/
 }
 
 //-------------------------------------------------------
@@ -92,28 +98,20 @@ function configurePage()
     //Minimize and Maximize functionality for sidebar
     var minButton = document.getElementById("minButton");
     var maxButton = document.getElementById("maxButton");
-    var sidebarContent = document.getElementById("content");
+    var sidebarContent = document.getElementById("sideBar");
     
     minButton.addEventListener('click', function(e) {
 
-        if (sidebarContent.style.visibility != "hidden") {
-                               
-	    sidebarContent.style.visibility = "hidden";
-            minButton.style.visibility = "hidden";
-	    maxButton.style.visibility = "visible";
-			
-        }
+        sidebarContent.className = "inactive";
+        minButton.className = "minmaxB inactive";
+        maxButton.className = "minmaxB active";
     });
 
     maxButton.addEventListener('click', function(e) {
         
-        if (maxButton.style.visibility != 'hidden') {
-                               
-            maxButton.style.visibility = "hidden";
-            minButton.style.visibility = "visible";
-            sidebarContent.style.visibility = "visible";
-                               
-        }
+        sidebarContent.className = "active";
+        minButton.className = "minmaxB active";
+        maxButton.className = "minmaxB inactive";
     });
 }
 
@@ -273,26 +271,15 @@ function init()
      *
      * @param fullListOfUsers - the list of connected users
      */
-    socket.once('firstupdate', function(fullListOfUsers, enviroStates)
+    socket.once('firstupdate', function(fullListOfUsers, lampState)
     {
     
-   	for (var eKey in enviroStates) {
-            
-	    var curr = enviroStates[eKey];
+        if (!lampState) {    
+            var lightBulb = document.getElementById("mw__lamp1");
 
-	    console.log(curr);
+            var mat = lightBulb.getElementsByTagName("Material");
 
-	    var newEnviro;
-
-	    switch (curr.type) {
-
-	        case "lamp":
-		    newEnviro = new Lamp(curr.name, curr.lampOn);
-		    break;
-	    }
-
-	    newEnviro.updateClient();
-
+            mat[0].setAttribute("diffuseColor", ".64 .69 .72");
         }
 
         //Add your own Name and information to fullListOfUsers
@@ -503,25 +490,36 @@ function init()
 	
 	document.getElementById("messages").appendChild(note);
     });
-
+            
     //-------------------------------------------------------
     /*
      * Triggered when someone toggles the lamp in the scene
      */
     
-    socket.on('updateEnvironment', function(eName, eState, eType) {
-      
-    	var newEnviro;
+    socket.on('updateEnvironment', function(state) {
+        
+        var lightBulb = document.getElementById("mw__lamp1");
 
-	switch (eType) {
-	
-	    case "lamp":
-	    newEnviro = new Lamp(eName, eState);
-	    break;
-	
-	}
+        var mat = lightBulb.getElementsByTagName("Material");
 
-    	newEnviro.updateClient();
+        var status = mat[0].getAttribute("diffuseColor");
+
+        if (status == ".95, .9, .25") {
+            mat[0].setAttribute("diffuseColor", ".64 .69 .72");
+        } else {
+            mat[0].setAttribute("diffuseColor", ".95, .9, .25");
+        }
+            
+        /*var newEnviro;
+
+        switch (eType) {
+
+            case "lamp":
+            newEnviro = new Lamp(eName, eState);
+            break;
+        }
+
+    	newEnviro.updateClient();*/
     });
     
     //-------------------------------------------------------
@@ -547,8 +545,10 @@ function init()
         }
     });
 
-
-    configureScene();
-
-    configurePage();
+    model.onload = function() {
+    
+            configureScene();
+            configurePage();
+    }
+    
 }

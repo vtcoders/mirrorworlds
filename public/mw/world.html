@@ -1,66 +1,74 @@
+<!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8"/>
-    <title>X3DOM server testing</title>
+    <title>MirrorWorlds</title>
 
     <script type='text/javascript' src='x3dom/x3dom.js'> </script> 
-    <link rel='stylesheet' type='text/css' href='x3dom/x3dom.css'/>
-    <link rel="stylesheet" type="text/css" href="client.css"/>
-    <!-- socket.io is served via the nodejs module via
-        the root based URL="/socket.io/socket.io.js" -->
+    <link rel='stylesheet' type='text/css' href='x3dom/x3dom.css'></link>
+    <link rel="stylesheet" type="text/css" href="world.css">
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="enviro-object.js"></script>
     <script src="client-object.js"></script>
+    
 </head>
 
-<body onload="init()">
+<body onload = "init()">
+    
+    <section>
+        <div id="sceneContainer" class="one-edge-shadow">
+            <X3D id="x3dContent">
+                <Scene>
+                    <inline id=mw_model nameSpaceName=mw></inline>
+                    <Viewpoint id="firstPerson" set_bind="true" position='2 1.5 5' orientation='0 1 0 0'></Viewpoint>
 
-    <div id=main>
+                    <Group id="avatarGroup"></Group>
+                </Scene>
+            </X3D>
+        </div>
 
-        <X3D id=x3d>
-	    <Scene>
-                <inline id=mw_model nameSpaceName=mw></inline>
-                <Viewpoint id="firstPerson" set_bind="true" position='2 1.5 5'
-                    orientation='0 1 0 0'></Viewpoint> 
-                <Group id="avatarGroup"></Group>
-            </Scene>
-        </X3D>
+        <div id="bottomBar">
 
-	<div id="info">
-		<b>People currently observing this model:</b>
-		<span id="users">Loading...</span>
-	</div>
+            <b>People currently observing this model:</b>
+            <span id="users">Loading...</span>
 
-    </div>
-
-    <div id="sidebar">
-  
-        <button id="maxButton" title="show toolbar" style="visibility: hidden"
-            class="minmaxB"><b> &lt; </b></button>
-        <button id="minButton" title="hide toolbar" style="visibility: visible"
-            class="minmaxB"><b> &gt; </b></button>
+        </div>
+    </section>
         
-            <div id="content" style="visibility: visible">
-                <br>
-                <span style="padding: 10px;">Toolbar</span>
-                <div id="toolbar">
+    <div id="sideBar">
+        
+        <div id="widgetSpace">
+            
+            <div class="widget">
+                <span class="widgetHeader">Avatars</span>
+                <div class="widgetContent">
                     <span>Select an Avatar:<br></span>
                     <select id="selectAvatar">
-                        <option value="avatars/pumba.x3d">Warthog</option>
                         <option value="avatars/teapot.x3d">Teapot</option>
-                        <option value="avatars/pumbaGreen.x3d">Green Warthog</option>
-                        <option value="avatars/pumbaBlue.x3d">Blue Warthog</option>
+                        <option value="avatars/fish.x3d">Gold Fish</option>
+                        <option value="avatars/car.x3d">Red Car</option>
+                        <option value="avatars/deer.x3d">Deer</option>
                     </select>
                 </div>
-
-            <span style="padding-left: 10px;">Scene Chat</span>
-            <div id="messageBlock">
+            </div>
+            
+            <div id="chat" class="widget" style="height: 50%;">
+                <span class="widgetHeader">Chat Window</span>
                 <ul id="messages"></ul>
                 <input id="inputField" autocomplete="off" />
                 <button id="sendButton">Send</button>
             </div>
+            
         </div>
         
-    </div>    
+        <button id="maxButton" title="show toolbar" class="minmaxB shadow inactive">
+            <b> &gt; </b>
+        </button>
+        <button id="minButton" title="hide toolbar" class="minmaxB active">
+            <b> &lt; </b>
+        </button>
+    </div>
+    
 </body>
+
 </html>

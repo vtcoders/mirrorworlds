@@ -1,4 +1,4 @@
-# MirrorWorldsHTMLServer
+# Mirror Worlds Main Server
 
 
 ## Ports
