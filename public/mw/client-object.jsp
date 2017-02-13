@@ -18,6 +18,8 @@ var spawnPosition = {"x": 25, "y": 0, "z": 11};
 var spawnOrientation = [{"x": 0, "y": 0, "z": 0}, 0];
 var avatarType = "avatars/teapot.x3d";
 var model;
+var exit;
+var getElementById;
 
 document.onload = function() {
 
@@ -25,7 +27,7 @@ document.onload = function() {
 	/*
 	 * Exit Function
 	 */
-	function exit() {
+	exit = function() {
 
 		console.log("Something has gone horribly wrong. Exiting.");
 
@@ -36,17 +38,14 @@ document.onload = function() {
 	/*
  	* Override 'getElementById'
  	*/
-	var getElementById = (function(element) {
+	getElementById = (function(element) {
 
 	console.log("Overriding getElementById!!");
 
 		if (document.getElementById(element) == null) {
 
 			console.log("Element does not exist. Exiting.");
-
-			//socket = null;
-
-			//exit();
+			exit();
 
 		} else {
 
@@ -95,6 +94,10 @@ function init() {
    		socket.on('connect', function() {
 
 			socket.on('disconnect', function() {				
+
+				socket.disconnect();
+
+				socket.removeAllListeners();
 
 				socket = null;
 
