@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <string>
+#include <stdlib.h>
 #include <memory>
 #include <iostream>
 #include <netinet/in.h>
@@ -53,103 +54,73 @@ void sendTracks(int cameraId, cv::Size imgSize, ObjectTracker* tracker, blobSend
     }
 }
 
-// TODO: this awful interface is compatible with the old
-// Usage: PROG <id> [path]
-// except the 2 args may be added [server port]
-// TODO: So this needs to be made a little cleaner.
-static
-int usage(std::string progName) {
-    std::cout << "Usage: " << progName << " <id> [path [server port]]" << std::endl
+static int
+usage(char *argv0) {
+    std::cout
+        << "  Usage: " << std::endl
+        << "    " << argv0 << " ID CONFIG.yml [--no-display]" << std::endl
+        <<  "  Or:" << std::endl 
+        << "    " << argv0
+        << " ID cameraURL serverAddress serverPORT [ CROP_X CROP_Y CROP_W CROP_H ] [--no-display]"
         << std::endl
-        << "Where [path] is optional and can be an IP address, a URL, or a video file." << std::endl
-        << "If [path] is an IP address, the correct URL will be guessed based on the camera ID." << std::endl
-        << "If [path] is omitted, camera parameters will be read from the configuration file." << std::endl;
+        << std::endl
+        << "  Run video motion tracking program."
+        << std::endl
+        << "  The program accepts 2, 4, or 8 arguments in the orders shown above, in addition to"
+        << std::endl
+        << "  the optional --no-display switch which must be last."
+        << std::endl
+        << std::endl
+        << "TODO: Write a better command-line interface."
+        << std::endl;
     return 1;
-}
-
-
-static
-Config *config;
-
-
-static
-std::string parseURL(int camId, std::string arg) {
-    in_addr ipaddr;
-    if(inet_pton(AF_INET, arg.c_str(), &ipaddr) == 1) {
-        if(config->isCameraDefined(camId)) {
-            CameraInfo camInfo = config->getCameraInfo(camId);
-            CameraClass classInfo = config->getCameraClassInfo(camInfo.className);
-            std::cout << "Using camera " << camId << " (" << camInfo.description << ")" << std::endl;
-            std::string url("http://");
-            url += classInfo.username + ":" + classInfo.password + "@";
-            url += arg + "/" + classInfo.path;
-            return url;
-        } else {
-            std::cout << "Using camera at address " << arg << std::endl;
-            return std::string("http://admin:admin@") + arg + std::string("/video.cgi?.mjpg");
-        }
-    } else {
-        std::cout << "Using file/URL " << arg << std::endl;
-        return arg;
-    }
-}
-
-static
-std::string getURL(int camId) {
-    CameraInfo camInfo = config->getCameraInfo(camId);
-    //cout << __FILE__ << ":" << __LINE__ << std::endl;
-    return parseURL(camId, camInfo.ip);
 }
 
 
 int main(int argc, char *argv[]) {
 
-    try {
-        config = new Config("config.yml");
-    } catch(const std::string filename) {
-        std::cerr << "Failed to open config file: " << filename << std::endl;
-        return 1;
+    // This is all the current configurable parameters that we will need
+    // and expose to the user to run this program.
+    std::string masterAddress;
+    std::string videoURL;
+    std::string cameraTitle;
+    int masterPortNumber = 0;
+    cv::Rect crop(0,0,0,0); // not cropped, height=0, by default
+
+    int id; // camera ID
+    bool haveDisplay = true;
+
+    if((argc > 3 && strcmp(argv[3],"--no-display") == 0) ||
+            (argc > 5 && strcmp(argv[5],"--no-display") == 0)||
+            (argc > 9 && strcmp(argv[9],"--no-display") == 0))
+    {
+        haveDisplay = false;
+        --argc;
     }
 
-    std::string serverURL = config->getServerURL();
-    int serverPort = config->getServerPort();
-    cv::Rect crop(0,0,0,0); // not cropped, height=0, by default 
-
-    int id;
-    std::string url;
-    // Parse arguments
-    if(argc == 1) {
-        // Defaults
-        std::cout << "Using default video input" << std::endl;
-        id = 0;
-        url = "../walk-cut.mov"; // TODO: this will fail
-    } else if(
-            (argc == 2 && std::string(argv[1]) == "--help") ||
-            (argc > 5) || // argc == 5 is valid
-            (argc == 4)
-            ) {
+    if(argc == 3) {
+        if(Config_getParameters(argv[2], id = strtol(argv[1], NULL, 10),
+                masterAddress, videoURL, cameraTitle, masterPortNumber, crop))
+        return usage(argv[0]); // error
+    } else if(argc == 5 || argc == 9) {
+        id = strtol(argv[1], NULL, 10);
+        videoURL = argv[2];
+        masterAddress = argv[3];
+        masterPortNumber = strtol(argv[4], NULL, 10);
+        if(argc == 9) {
+            crop.x = strtol(argv[5], NULL, 10);
+            crop.y = strtol(argv[6], NULL, 10);
+            crop.width = strtol(argv[7], NULL, 10);
+            crop.height = strtol(argv[8], NULL, 10);
+        }
+    } else
         return usage(argv[0]);
-    } else if(argc == 2) {
-        id = std::atoi(argv[1]);
-        url = getURL(id);
-    } else {
-        id = std::atoi(argv[1]);
-        url = parseURL(id, argv[2]);
-    }
-
-    if(config->isCameraDefined(id))
-        // Get the camera crop
-        crop = config->getCameraInfo(id).crop;
-
-    delete config; // We are done with config.
 
     // Initialize system objects
-    blobSender sender(
-            (argc==5) ? argv[3] : serverURL.c_str(),
-            (argc==5) ? std::atoi(argv[4]) : serverPort
-            ); // set up networking
-    Camera camera(url, crop);
-    Display display("camera " + std::to_string(id));
+    blobSender sender(masterAddress.c_str(), masterPortNumber);
+    Camera camera(videoURL, crop);
+    Display *display = 0;
+        if(haveDisplay) display = new Display(cameraTitle);
     ObjectTracker* tracker = new DifferenceTracker();
 
     // Start video processing
@@ -157,7 +128,8 @@ int main(int argc, char *argv[]) {
         cv::UMat frame;
         while(camera.getFrame(frame)) {
             tracker->processFrame(frame);
-            display.showFrame(frame, tracker->getMaskImage(), tracker->getTracks());
+            if(display)
+                display->showFrame(frame, tracker->getMaskImage(), tracker->getTracks());
             sendTracks(id, {frame.cols, frame.rows}, tracker, sender);
             // Only the least-signficant byte is used, sometimes the rest is garbage so 0xFF is needed
             int key = cv::waitKey(10) & 0xFF;
