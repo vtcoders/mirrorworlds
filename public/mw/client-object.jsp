@@ -1,7 +1,7 @@
 
 var socket;
 var name;
-var spawnPosition = {"x": 25, "y": 0, "z": 11};
+var spawnPosition = {"x": 2, "y": 1.5, "z": 5};
 var spawnOrientation = [{"x": 0, "y": 0, "z": 0}, 0];
 var avatarType = "avatars/teapot.x3d";
 var model;
@@ -80,21 +80,10 @@ function init() {
                 exit('server at ' + location.host + ' disconnected');
             });
 
-            console.log("1 Connect");
-
             socket.emit('newconnection', name, spawnPosition, spawnOrientation,
                     avatarType);
 
             socket.on('initiate', function(fullListOfUsers) {
-
-                console.log("2 Initiate");
-
-                /*//Add your own Name and information to fullListOfUsers
-                  if(fullListOfUsers[0] === undefined) {
-
-                  fullListOfUsers[name] = [name, spawnPosition,
-                  spawnOrientation, avatarType];
-                  }*/
 
                 //Adds Avatar to X3D scene for new user
                 var avatarGroup = getElementById("avatarGroup");
@@ -340,23 +329,31 @@ function init() {
         //Set up camera to provide location data
         var x3d = document.getElementsByTagName("X3D")[0];
         var camera = x3d.runtime.getActiveBindable("Viewpoint");
-        var cPos = "" + spawnPosition.x + " " + spawnPosition.y + " " +
-            spawnPosition.z;
-        var cRot = "" + spawnOrientation[0].x + " " +
-            spawnOrientation[0].y + " " + spawnOrientation[0].z + " " +
-            spawnOrientation[1];
-        camera.setAttribute("position", cPos);
-        camera.setAttribute("orientation", cRot);
+
+		if (camera == undefined) {
+
+			camera = document.createElement("viewpoint");
+			var scene = x3d.getElementsByTagName("Scene");
+
+			scene[0].appendChild(camera);
+
+			spawnPosition = {"x": 2, "y": 1.5, "z": 5};
+			spawnOrientation = [{"x": 0, "y": 0, "z": 0}, 0];
+
+        	camera.setAttribute("position", "2 1.5 5");
+			camera.setAttribute("orientation", "0 0 0 0");
+		} 
+		else {
+
+			spawnPosition = camera.getAttribute("position");
+			spawnOrientation = camera.getAttribute("orientation");
+		}
 
         //Add listener to camera to update server with location data
-        var cam = getElementById('firstPerson');
-        cam.addEventListener('viewpointChanged', positionUpdated);
-
-        //var lampToggle = document.getElementById("mw_model");
+        camera.addEventListener('viewpointChanged', positionUpdated);
 
         //Add listener to lamp button
         var lampToggle = document.getElementById("mw__lampToggle");
-        console.log(lampToggle);
 
         if(lampToggle) {
             console.log("Adding Event Listener");
