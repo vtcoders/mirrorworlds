@@ -1,6 +1,7 @@
 
 var socket;
-var name;
+var publicName;
+var uniqueId;
 var spawnPosition = {"x": 2, "y": 1.5, "z": 5};
 var spawnOrientation = [{"x": 0, "y": 0, "z": 0}, 0];
 var avatarType = "avatars/teapot.x3d";
@@ -57,12 +58,11 @@ function init() {
 
     model.onload = function() {
 
-        name = prompt("Enter your name:");
+        publicName = prompt("Enter your name:");
 
-        if(name === null || name.length < 1) {
+        if(publicName === null || publicName.length < 1) {
 
-            // TODO: do more for this case?
-            return;
+            publicName = "";
         }
 
         socket = new io.connect('');
@@ -80,25 +80,40 @@ function init() {
                 exit('server at ' + location.host + ' disconnected');
             });
 
-            socket.emit('newconnection', name, spawnPosition, spawnOrientation,
+			console.log("Emitting New Connection");
+
+            socket.emit('newconnection', publicName, spawnPosition, spawnOrientation,
                     avatarType);
 
-            socket.on('initiate', function(fullListOfUsers) {
+            socket.on('initiate', function(myId, userList) {
 
-                //Adds Avatar to X3D scene for new user
+				console.log("Initiate");
+
+				console.log(userList);
+
+				uniqueId = myId;
+
+				if (publicName == "") {
+
+					publicName = myId;
+				}
+
                 var avatarGroup = getElementById("avatarGroup");
                 avatarGroup.innerHTML = "";
                 var scene = document.getElementsByTagName("Scene")[0];
+                
+				var userConsole = getElementById("users");
+				userConsole.innerHTML = "";
 
-                for (var key in fullListOfUsers) {
+                for (var key in userList) {
 
-                    var current = fullListOfUsers[key];
+                    var current = userList[key];
 
                     //Generate a Transform for key's avatar
                     var userAvatar = document.createElement('Transform');
                     userAvatar.setAttribute("translation", "0 0 5");
                     userAvatar.setAttribute("rotation", "0 0 0 0");
-                    userAvatar.setAttribute("id", key + "Avatar"); 
+                    userAvatar.setAttribute("id", key + "Avatar");
 
                     //Generate x3d model of avatar
                     var characterOfAvatar = document.createElement('inline');
@@ -111,7 +126,7 @@ function init() {
                     userAvatar.appendChild(characterOfAvatar);
 
                     //if adding self, add to a bundle with camera
-                    if(current[0] == name) {
+                    if(key == uniqueId) {
                         var userBundle = document.createElement('Transform');
                         userBundle.setAttribute("id", key + "Bundle");
                         userBundle.setAttribute("translation", current[1].x + " " +
@@ -127,7 +142,7 @@ function init() {
                         userBundle.appendChild(userAvatar);
 
                         //Add a message to the chat window that someone is joining
-                        var welcomeMessage = "" + name + " is joining the scene.";
+                        var welcomeMessage = "" + publicName + " is joining the scene.";
                         socket.emit('newnote', welcomeMessage);
 
                     } 
@@ -137,59 +152,73 @@ function init() {
 
                         avatarGroup.appendChild(userAvatar)
                     }
+
+					//Add user to user console
+					var current = userList[key];
+            		var userListEntry = document.createElement('span');
+            		var newPLine = document.createElement('p');
+           			userListEntry.setAttribute("id", key);
+           			userListEntry.innerHTML = (userList[key][0] + " observing at: " + current[1].x +
+                   		", " + current[1].y + ", " + current[1].z);
+            		userConsole.appendChild(newPLine);					
+            		userConsole.appendChild(userListEntry);
+
                 }
-
-                //Build the list of connected users
-                buildList(fullListOfUsers);
-
             });
 
-            socket.on('newuser', function(newestUser) {	
+            socket.on('newuser', function(newestUser, userId) {	
 
                 console.log("New User Fired");
 
-                var duplicateNames = document.getElementById(newestUser[0]);
+                //Add Users Avatar
+                var avatarGroup = getElementById("avatarGroup");
 
-                if(newestUser[0] != null && name != newestUser[0] &&
-                        duplicateNames == null) {	
+                var userAvatar = document.createElement('Transform');
 
-                    //Add Users Avatar
-                    var avatarGroup = getElementById("avatarGroup");
+                userAvatar.setAttribute("translation", newestUser[1].x + " " +
+                        newestUser[1].y + " " + newestUser[1].z);
+                userAvatar.setAttribute("rotation", newestUser[2][0].x + " " +
+                        newestUser[2][0].y + " " + newestUser[2][0].z + " " +
+                        newestUser[2][1]);
 
-                    var userAvatar = document.createElement('Transform');
+                userAvatar.setAttribute("id", userId + "Avatar");
 
-                    userAvatar.setAttribute("translation", newestUser[1].x + " " +
-                            newestUser[1].y + " " + newestUser[1].z);
-                    userAvatar.setAttribute("rotation", newestUser[2][0].x + " " +
-                            newestUser[2][0].y + " " + newestUser[2][0].z + " " +
-                            newestUser[2][1]);
+                console.log("Created node: " + userAvatar.getAttribute("id"));
 
-                    userAvatar.setAttribute("id", newestUser[0] + "Avatar");
+                var inlineElement = document.createElement('inline');
+                inlineElement.setAttribute("id", userId + "Inline");
+                inlineElement.setAttribute("url", newestUser[3]);
 
-                    console.log("Created node: " + userAvatar.getAttribute("id"));
+                userAvatar.appendChild(inlineElement);
+                avatarGroup.appendChild(userAvatar);
 
-                    var inlineElement = document.createElement('inline');
-                    inlineElement.setAttribute("id", newestUser[0] + "Inline");
-                    inlineElement.setAttribute("url", newestUser[3]);
-
-                    userAvatar.appendChild(inlineElement);
-                    avatarGroup.appendChild(userAvatar);
-
-                    //Update HTML
-                    addUser(newestUser);
-                }
+                //Update HTML
+                console.log("Adding User: ", userId);
+        		var userList = getElementById("users");
+       			var userListEntry = document.createElement('span');
+       			var newPLine = document.createElement('p');
+        		userListEntry.setAttribute("id", userId);
+        		userListEntry.innerHTML = (newestUser[0] + " observing at: " +
+                	newestUser[1].x + ", " + newestUser[1].y + ", " +
+                	newestUser[1].z);
+        		userList.appendChild(newPLine);
+        		userList.appendChild(userListEntry);
             });
 
-            socket.on('update', function(updatedUser) {
+           /**
+			* Update X3D Scene - OLD
+			*
+			*/
+
+			socket.on('update', function(updatedUser, userId) {
 
                 console.log("Update Fired");
 
-                var userTransform = document.getElementById(updatedUser[0] + "Bundle");
+                var userTransform = document.getElementById(userId + "Bundle");
 
                 if(userTransform == null) {
 
-                    userTransform = document.getElementById(updatedUser[0] +
-                            "Avatar");
+                    userTransform = document.getElementById(userId + "Avatar");
 
                     if(userTransform == null) {
                         return;
@@ -204,16 +233,15 @@ function init() {
                         " " + updatedUser[2][1]);
 
                 //Update HTML
-                updateList(updatedUser);
-
+                getElementById(userId).innerHTML = (updatedUser[0] + " observing at: " 
+					+ updatedUser[1].x + "," + updatedUser[1].y + ", " 
+					+ updatedUser[1].z);
             });
 
-            socket.on('deleteuser', function(removableUser) {
-
-                console.log("Delete Fired");
+            socket.on('deleteuser', function(userId) {
 
                 // Remove the avatar from the scene.
-                var removeAvatar = document.getElementById(removableUser[0] + "Avatar");
+                var removeAvatar = document.getElementById(userId + "Avatar");
 
                 if(removeAvatar != null) {
 
@@ -222,7 +250,9 @@ function init() {
                 }
 
                 //Remove User's HTML Content
-                removeUser(removableUser);
+                var users = getElementById("users");
+        		var remove = getElementById(userId);
+        		users.removeChild(remove);
             });
 
             //-------------------------------------------------------
@@ -230,9 +260,9 @@ function init() {
              * Triggered when someone changes their avatar
              *
              */
-            socket.on('changeAvatar', function(userName, avatar) {
+            socket.on('changeAvatar', function(id, avatar) {
 
-                var userAvatar = getElementById(userName + "Inline");
+                var userAvatar = getElementById(id + "Inline");
                 userAvatar.setAttribute("url", avatar);    
             });
 
@@ -296,7 +326,7 @@ function init() {
              */
             window.addEventListener('keypress', function(e) {
 
-                var avatar = getElementById(name + "Avatar");
+                var avatar = getElementById(uniqueId + "Avatar");
 
                 //Switch to first person view by pressing 1
                 if(e.keyCode === 49) {
@@ -330,6 +360,7 @@ function init() {
         var x3d = document.getElementsByTagName("X3D")[0];
         var camera = x3d.runtime.getActiveBindable("Viewpoint");
 
+		//Attach default camera if none exists
 		if (camera == undefined) {
 
 			camera = document.createElement("viewpoint");
@@ -376,7 +407,7 @@ function init() {
 
         selectAvatar.addEventListener('change', function() {
 
-            socket.emit('newavatar', name, selectAvatar.value);
+            socket.emit('newavatar', uniqueId, selectAvatar.value);
         });
 
         //Initialize buttons and listeners for chat function
@@ -412,8 +443,6 @@ function init() {
         });
     }
 
-
-
     //-------------------------------------------------------
     /*
      * Sends position data to server
@@ -423,8 +452,11 @@ function init() {
         var pos = e.position;
         var rot = e.orientation;
 
-        //Tell the server that this client has moved and send new location data
-        socket.emit('updateposition', name, pos, rot, avatarType);
+		if (uniqueId != null) {
+
+			//Tell the server that this client has moved and send new location data
+			socket.emit('updateposition', uniqueId, publicName, pos, rot, avatarType);
+		}
     }
 
     //-------------------------------------------------------
@@ -444,79 +476,6 @@ function init() {
         }
 
         console.log("Sending a Message!");
-        socket.emit('chatmessage', name, message);
+        socket.emit('chatmessage', uniqueId, message);
     }
-
-    //-----------------------------
-    // HTML Manipulators
-    //-----------------------------
-
-    /*
-     * Builds HTML list of connected users
-     *
-     * @param fullListOfUsers - the list of connected users
-     */
-    function buildList(fullListOfUsers)
-    {
-        var userList = getElementById("users");
-        userList.innerHTML = "";
-
-        //Add each user to the HTML list
-        for (var key in fullListOfUsers)
-        {
-            var current = fullListOfUsers[key];
-            var userListEntry = document.createElement('span');
-            var newPLine = document.createElement('p');
-            userListEntry.setAttribute("id", key);
-            userListEntry.innerHTML = (key + " observing at: " + current[1].x +
-                    ", " + current[1].y + ", " + current[1].z);
-            userList.appendChild(newPLine);					
-            userList.appendChild(userListEntry);
-        }
-    }
-
-    /*
-     * Adds a new user to the HTML list of users
-     *
-     * @param newestUser - user to be added to the list
-     */
-    function addUser(newestUser)
-    {
-        console.log("Adding User: ", newestUser[0]);
-        var userList = getElementById("users");
-        var userListEntry = document.createElement('span');
-        var newPLine = document.createElement('p');
-        userListEntry.setAttribute("id", newestUser[0]);
-        userListEntry.innerHTML = (newestUser[0] + " observing at: " +
-                newestUser[1].x + ", " + newestUser[1].y + ", " +
-                newestUser[1].z);
-        userList.appendChild(newPLine);
-        userList.appendChild(userListEntry);
-    }
-
-    /*
-     * Removes a user from the HTML list of users
-     *
-     * @param goodbyeUser - user to be deleted
-     */
-    function removeUser(goodbyeUser)
-    {
-        var users = getElementById("users");
-        var remove = getElementById(goodbyeUser[0]);
-        users.removeChild(remove);
-    }
-
-    /*
-     * Updates the HTML list with new position data
-     *
-     * @param updateUser - the updated user
-     */
-    function updateList(updateUser)
-    {
-        getElementById(updateUser[0]).innerHTML = 
-            (updateUser[0] + " observing at: " +
-             updateUser[1].x + ", " + updateUser[1].y + 
-             ", " + updateUser[1].z);
-    }
-
 }
