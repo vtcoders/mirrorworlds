@@ -1,4 +1,5 @@
 
+var source = "web";
 var socket;
 var publicName;
 var uniqueId;
@@ -55,7 +56,6 @@ function init() {
 
     model.url = url;
 
-
     model.onload = function() {
 
         publicName = prompt("Enter your name:");
@@ -82,7 +82,7 @@ function init() {
 
 			console.log("Emitting New Connection");
 
-            socket.emit('newconnection', publicName, spawnPosition, spawnOrientation,
+            socket.emit('newconnection', source, publicName, spawnPosition, spawnOrientation,
                     avatarType);
 
             socket.on('initiate', function(myId, userList) {
@@ -120,7 +120,7 @@ function init() {
                     characterOfAvatar.setAttribute("id", key + "Inline");
 
                     //current[3] == user's choice of avatar
-                    characterOfAvatar.setAttribute("url", current[3]);
+                    characterOfAvatar.setAttribute("url", current[4]);
 
                     //Add x3d model to the avatar Transform
                     userAvatar.appendChild(characterOfAvatar);
@@ -129,12 +129,12 @@ function init() {
                     if(key == uniqueId) {
                         var userBundle = document.createElement('Transform');
                         userBundle.setAttribute("id", key + "Bundle");
-                        userBundle.setAttribute("translation", current[1].x + " " +
-                                current[1].y + " " + current[1].z);
+                        userBundle.setAttribute("translation", current[2].x + " " +
+                                current[2].y + " " + current[2].z);
 
-                        userBundle.setAttribute("rotation", current[2][0].x + " " +
-                                current[2][0].y + " " + current[2][0].z + " " +
-                                current[2][1]);
+                        userBundle.setAttribute("rotation", current[3][0].x + " " +
+                                current[3][0].y + " " + current[3][0].z + " " +
+                                current[3][1]);
 
                         var scene = document.getElementsByTagName("Scene")[0];
 
@@ -158,8 +158,8 @@ function init() {
             		var userListEntry = document.createElement('span');
             		var newPLine = document.createElement('p');
            			userListEntry.setAttribute("id", key);
-           			userListEntry.innerHTML = (userList[key][0] + " observing at: " + current[1].x +
-                   		", " + current[1].y + ", " + current[1].z);
+           			userListEntry.innerHTML = (userList[key][1] + " observing at: " + current[2].x +
+                   		", " + current[2].y + ", " + current[2].z);
             		userConsole.appendChild(newPLine);					
             		userConsole.appendChild(userListEntry);
 
@@ -175,11 +175,11 @@ function init() {
 
                 var userAvatar = document.createElement('Transform');
 
-                userAvatar.setAttribute("translation", newestUser[1].x + " " +
-                        newestUser[1].y + " " + newestUser[1].z);
-                userAvatar.setAttribute("rotation", newestUser[2][0].x + " " +
-                        newestUser[2][0].y + " " + newestUser[2][0].z + " " +
-                        newestUser[2][1]);
+                userAvatar.setAttribute("translation", newestUser[2].x + " " +
+                        newestUser[2].y + " " + newestUser[2].z);
+                userAvatar.setAttribute("rotation", newestUser[3][0].x + " " +
+                        newestUser[3][0].y + " " + newestUser[3][0].z + " " +
+                        newestUser[3][1]);
 
                 userAvatar.setAttribute("id", userId + "Avatar");
 
@@ -187,7 +187,7 @@ function init() {
 
                 var inlineElement = document.createElement('inline');
                 inlineElement.setAttribute("id", userId + "Inline");
-                inlineElement.setAttribute("url", newestUser[3]);
+                inlineElement.setAttribute("url", newestUser[4]);
 
                 userAvatar.appendChild(inlineElement);
                 avatarGroup.appendChild(userAvatar);
@@ -198,19 +198,19 @@ function init() {
        			var userListEntry = document.createElement('span');
        			var newPLine = document.createElement('p');
         		userListEntry.setAttribute("id", userId);
-        		userListEntry.innerHTML = (newestUser[0] + " observing at: " +
-                	newestUser[1].x + ", " + newestUser[1].y + ", " +
-                	newestUser[1].z);
+        		userListEntry.innerHTML = (newestUser[1] + " observing at: " +
+                	newestUser[2].x + ", " + newestUser[2].y + ", " +
+                	newestUser[2].z);
         		userList.appendChild(newPLine);
         		userList.appendChild(userListEntry);
             });
 
            /**
-			* Update X3D Scene
+			* Update X3D Scene - OLD
 			*
 			*/
 
-			socket.on('update', function(updatedUser, userId) {
+		/*	socket.on('update', function(updatedUser, userId) {
 
                 console.log("Update Fired");
 
@@ -236,7 +236,52 @@ function init() {
                 getElementById(userId).innerHTML = (updatedUser[0] + " observing at: " 
 					+ updatedUser[1].x + "," + updatedUser[1].y + ", " 
 					+ updatedUser[1].z);
-            });
+            });*/
+
+			/**
+			 * Update X3D Scene based on source input
+			 *
+			 */
+
+			socket.on('update', function(user, id) {
+
+				//make updates based on source
+				switch(user[0]) {
+
+					case "web" :
+						console.log("Update Fired");
+
+              			var userTransform = document.getElementById(id + "Bundle");
+
+                		if(userTransform == null) {
+
+                    		userTransform = document.getElementById(id + "Avatar");
+
+                   		 if(userTransform == null) {
+                    		    return;
+                   		 }
+                		}
+
+                		userTransform .setAttribute("translation", user[2].x +
+                       		" " + user[2].y + " " + user[2].z);
+
+                		userTransform .setAttribute("rotation", user[3][0].x +
+                        	" " + user[3][0].y + " " + user[3][0].z +
+                        	" " + user[3][1]);
+
+                		//Update HTML
+                		getElementById(id).innerHTML = (user[1] + " observing at: " 
+							+ user[2].x + "," + user[2].y + ", " 
+							+ user[2].z);
+
+						break;
+
+					default :
+
+						console.log("Invalid source type.");
+						break;
+				}
+			});
 
             socket.on('deleteuser', function(userId) {
 
@@ -455,7 +500,7 @@ function init() {
 		if (uniqueId != null) {
 
 			//Tell the server that this client has moved and send new location data
-			socket.emit('updateposition', uniqueId, publicName, pos, rot, avatarType);
+			socket.emit('updateposition', uniqueId, pos, rot);
 		}
     }
 
