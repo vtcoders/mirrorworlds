@@ -3,8 +3,8 @@ var source = "web";
 var socket;
 var publicName;
 var uniqueId;
-var spawnPosition = {"x": 2, "y": 1.5, "z": 5};
-var spawnOrientation = [{"x": 0, "y": 0, "z": 0}, 0];
+var spawnPosition;
+var spawnOrientation;
 var avatarType = "avatars/teapot.x3d";
 var model;
 var exit;
@@ -88,8 +88,6 @@ function init() {
             socket.on('initiate', function(myId, userList) {
 
 				console.log("Initiate");
-
-				console.log(userList);
 
 				uniqueId = myId;
 
@@ -204,39 +202,6 @@ function init() {
         		userList.appendChild(newPLine);
         		userList.appendChild(userListEntry);
             });
-
-           /**
-			* Update X3D Scene - OLD
-			*
-			*/
-
-		/*	socket.on('update', function(updatedUser, userId) {
-
-                console.log("Update Fired");
-
-                var userTransform = document.getElementById(userId + "Bundle");
-
-                if(userTransform == null) {
-
-                    userTransform = document.getElementById(userId + "Avatar");
-
-                    if(userTransform == null) {
-                        return;
-                    }
-                }
-
-                userTransform .setAttribute("translation", updatedUser[1].x +
-                        " " + updatedUser[1].y + " " + updatedUser[1].z);
-
-                userTransform .setAttribute("rotation", updatedUser[2][0].x +
-                        " " + updatedUser[2][0].y + " " + updatedUser[2][0].z +
-                        " " + updatedUser[2][1]);
-
-                //Update HTML
-                getElementById(userId).innerHTML = (updatedUser[0] + " observing at: " 
-					+ updatedUser[1].x + "," + updatedUser[1].y + ", " 
-					+ updatedUser[1].z);
-            });*/
 
 			/**
 			 * Update X3D Scene based on source input
