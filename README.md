@@ -35,6 +35,12 @@ See:
 ```
 for more configuration options.
 
+### Installing Details
+
+You can seperate the parts of the software package build that download
+file by running ```make download``` after ```./configure```, and
+before ```make```.
+
 ## Running the server
 
 The Mirror Worlds server is installed as mw_server in the directory
