@@ -67,8 +67,14 @@ function init() {
 
         socket = new io.connect('');
 
+		/**
+		* Hit when the socket first connects to the server
+		*/
         socket.on('connect', function() {
 
+			/**
+			* Hit when the socket disconnects from the server
+			*/
             socket.on('disconnect', function() {				
 
                 socket.disconnect();
@@ -82,89 +88,114 @@ function init() {
 
 			console.log("Emitting New Connection");
 
-            socket.emit('newconnection', source, publicName, spawnPosition, spawnOrientation,
-                    avatarType);
+			var user = [publicName, spawnPosition, spawnOrientation, avatarType];
 
-            socket.on('initiate', function(myId, userList) {
+			/**
+			* Send user information to server
+			*/
+            socket.emit('newconnection', source, user);
 
-				console.log("Initiate");
+			/**
+			* Updates new client with current scene attributes
+			* Hit when user is first registered on the server
+			*
+			* @param connections - list of all connected users and states
+			* @param sourceId - uniqueID for this client's connection
+			*/
+            socket.on('initiate', function(connections, sourceId) {
 
-				uniqueId = myId;
+				for (var key in connections[sourceId]) {
 
-				if (publicName == "") {
+					//How do multiple channels figure into this?
 
-					publicName = myId;
+					console.log("Initiate");
+
+					uniqueId = key;
+
+					if (publicName == "") {
+
+						publicName = key;
+					}
 				}
-
-                var avatarGroup = getElementById("avatarGroup");
+                
+				var avatarGroup = getElementById("avatarGroup");
                 avatarGroup.innerHTML = "";
                 var scene = document.getElementsByTagName("Scene")[0];
-                
+
 				var userConsole = getElementById("users");
 				userConsole.innerHTML = "";
+				
+				//Run for each collection of users
+                for (var sources in connections) {
 
-                for (var key in userList) {
+					var userList = connections[sources];
 
-                    var current = userList[key];
+					//Look at each user in collection
+					for (var key in userList) {
 
-                    //Generate a Transform for key's avatar
-                    var userAvatar = document.createElement('Transform');
-                    userAvatar.setAttribute("translation", "0 0 5");
-                    userAvatar.setAttribute("rotation", "0 0 0 0");
-                    userAvatar.setAttribute("id", key + "Avatar");
+                   		var current = userList[key];
 
-                    //Generate x3d model of avatar
-                    var characterOfAvatar = document.createElement('inline');
-                    characterOfAvatar.setAttribute("id", key + "Inline");
+                   		//Generate a Transform for key's avatar
+                    	var userAvatar = document.createElement('Transform');
+                    	userAvatar.setAttribute("translation", "0 0 5");
+                    	userAvatar.setAttribute("rotation", "0 0 0 0");
+                    	userAvatar.setAttribute("id", key + "Avatar");
 
-                    //current[3] == user's choice of avatar
-                    characterOfAvatar.setAttribute("url", current[4]);
+                    	//Generate x3d model of avatar
+                    	var characterOfAvatar = document.createElement('inline');
+                    	characterOfAvatar.setAttribute("id", key + "Inline");
 
-                    //Add x3d model to the avatar Transform
-                    userAvatar.appendChild(characterOfAvatar);
+                    	//current[3] == user's choice of avatar
+                    	characterOfAvatar.setAttribute("url", current[3]);
 
-                    //if adding self, add to a bundle with camera
-                    if(key == uniqueId) {
-                        var userBundle = document.createElement('Transform');
-                        userBundle.setAttribute("id", key + "Bundle");
-                        userBundle.setAttribute("translation", current[2].x + " " +
-                                current[2].y + " " + current[2].z);
+                    	//Add x3d model to the avatar Transform
+                    	userAvatar.appendChild(characterOfAvatar);
 
-                        userBundle.setAttribute("rotation", current[3][0].x + " " +
-                                current[3][0].y + " " + current[3][0].z + " " +
-                                current[3][1]);
+                    	//if adding self, add to a bundle with camera
+                    	if(key == uniqueId) {
+                        	var userBundle = document.createElement('Transform');
+                        	userBundle.setAttribute("id", key + "Bundle");
+                        	userBundle.setAttribute("translation", current[1].x + " " +
+                                current[1].y + " " + current[1].z);
 
-                        var scene = document.getElementsByTagName("Scene")[0];
+                        	userBundle.setAttribute("rotation", current[2][0].x + " " +
+                                current[2][0].y + " " + current[2][0].z + " " +
+                                current[2][1]);
 
-                        scene.appendChild(userBundle);
-                        userBundle.appendChild(userAvatar);
+                        	var scene = document.getElementsByTagName("Scene")[0];
 
-                        //Add a message to the chat window that someone is joining
-                        var welcomeMessage = "" + publicName + " is joining the scene.";
-                        socket.emit('newnote', welcomeMessage);
+                        	scene.appendChild(userBundle);
+                        	userBundle.appendChild(userAvatar);
 
-                    } 
+                        	//Add a message to the chat window that someone is joining
+                        	var welcomeMessage = "" + publicName + " is joining the scene.";
+                        	socket.emit('newnote', welcomeMessage);
 
-                    //if adding someone else, add them to the group of other avatars
-                    else {
+                    	}
 
-                        avatarGroup.appendChild(userAvatar)
-                    }
+                    	//if adding someone else, add them to the group of other avatars
+                    	else {
 
-					//Add user to user console
-					var current = userList[key];
-            		var userListEntry = document.createElement('span');
-            		var newPLine = document.createElement('p');
-           			userListEntry.setAttribute("id", key);
-           			userListEntry.innerHTML = (userList[key][1] + " observing at: " + current[2].x +
-                   		", " + current[2].y + ", " + current[2].z);
-            		userConsole.appendChild(newPLine);					
-            		userConsole.appendChild(userListEntry);
+                        	avatarGroup.appendChild(userAvatar);
+                    	}
 
-                }
+						//Add user to user console
+            			var userListEntry = document.createElement('span');
+            			var newPLine = document.createElement('p');
+           				userListEntry.setAttribute("id", key);
+
+						console.log("Spawn: " + current[1]);
+						console.log(current);;
+
+           				userListEntry.innerHTML = (current[0] + " observing at: " + current[1].x +
+                   			", " + current[1].y + ", " + current[1].z);
+            			userConsole.appendChild(newPLine);					
+            			userConsole.appendChild(userListEntry);
+                	}
+				}
             });
 
-            socket.on('newuser', function(newestUser, userId) {	
+            socket.on('newuser', function(newSource) {	
 
                 console.log("New User Fired");
 
