@@ -89,11 +89,12 @@ function init() {
 			console.log("Emitting New Connection");
 
 			var user = [publicName, spawnPosition, spawnOrientation, avatarType];
+			var totalUsers = {user};
 
 			/**
 			* Send user information to server
 			*/
-            socket.emit('newconnection', source, user);
+            socket.emit('newconnection', source, totalUsers);
 
 			/**
 			* Updates new client with current scene attributes
