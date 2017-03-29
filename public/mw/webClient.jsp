@@ -1,5 +1,6 @@
 
 var socket;
+var source = "web";
 var publicName;
 var uniqueId;
 var spawnPosition = {"x": 2, "y": 1.5, "z": 5};
@@ -8,6 +9,7 @@ var pos = {};
 var rot = {};
 var avatarType = "avatars/FemaleTeen_aopted.x3d";
 var model;
+var camera;
 var exit;
 
 //-------------------------------------------------------
@@ -89,14 +91,17 @@ function init() {
 			pos = spawnPosition;
 			rot = spawnOrientation;
 
-            socket.emit('newconnection', publicName, spawnPosition, spawnOrientation,
-                    avatarType);
+			var startPacket = [source, publicName, pos, rot, avatarType];
 
+            socket.emit('newconnection', startPacket);
+
+           //-------------------------------------------------------
+		   /*
+			* Triggered when client connects for the first time
+			*/
             socket.on('initiate', function(myId, userList) {
 
 				console.log("Initiate");
-
-				console.log(userList);
 
 				uniqueId = myId;
 
@@ -114,219 +119,251 @@ function init() {
 
                 for (var key in userList) {
 
+					//current = [source, publicName, pos, rot, avatarType, ...];
                     var current = userList[key];
+					var currentSource = current[0];
 
-                    //Generate a Transform for key's avatar
-                    var userAvatar = document.createElement('Transform');
-                    userAvatar.setAttribute("translation", "0 -.5 .5");
-                    userAvatar.setAttribute("rotation", "0 0 0 0");
-                    userAvatar.setAttribute("id", key + "Avatar");
+					console.log(currentSource);
 
-                    //Generate x3d model of avatar
-                    var characterOfAvatar = document.createElement('inline');
-                    characterOfAvatar.setAttribute("id", key + "Inline");
+					switch (currentSource) {
 
-                    //current[3] == user's choice of avatar
-                    characterOfAvatar.setAttribute("url", current[3]);
+						case "web" :
 
-                    //Add x3d model to the avatar Transform
-                    userAvatar.appendChild(characterOfAvatar);
+		                    //Generate a Transform for key's avatar
+        		            var userAvatar = document.createElement('Transform');
+                		    userAvatar.setAttribute("translation", "0 -.5 .5");
+                    		userAvatar.setAttribute("rotation", "0 0 0 0");
+                    		userAvatar.setAttribute("id", key + "Avatar");
 
-                    //if adding self, add to a bundle with camera
-                    if(key == uniqueId) {
-                        var userBundle = document.createElement('Transform');
-                        userBundle.setAttribute("id", key + "Bundle");
-                        userBundle.setAttribute("translation", current[1].x + " " +
-                                current[1].y + " " + current[1].z);
+                    		//Generate x3d model of avatar
+                    		var characterOfAvatar = document.createElement('inline');
+                    		characterOfAvatar.setAttribute("id", key + "Inline");
 
-                        userBundle.setAttribute("rotation", current[2][0].x + " " +
-                                current[2][0].y + " " + current[2][0].z + " " +
-                                current[2][1]);
+                    		characterOfAvatar.setAttribute("url", current[4]);
 
-                        var scene = document.getElementsByTagName("Scene")[0];
+                    		//Add x3d model to the avatar Transform
+                   		 	userAvatar.appendChild(characterOfAvatar);
 
-                        scene.appendChild(userBundle);
-                        userBundle.appendChild(userAvatar);
+                    		//if adding self, add to a bundle with camera
+                    		if(key == uniqueId) {
 
-                        //Add a message to the chat window that someone is joining
-                        var welcomeMessage = "" + publicName + " is joining the scene.";
-                        socket.emit('newnote', welcomeMessage);
+                       			var userBundle = document.createElement('Transform');
+                        		userBundle.setAttribute("id", key + "Bundle");
+                        		userBundle.setAttribute("translation", current[2].x + " " +
+                                	current[2].y + " " + current[2].z);
 
-                    } 
+                        		userBundle.setAttribute("rotation", current[3][0].x + " " +
+                                	current[3][0].y + " " + current[3][0].z + " " +
+                                	current[3][1]);
 
-                    //if adding someone else, add them to the group of other avatars
-                    else {
+                        		var scene = document.getElementsByTagName("Scene")[0];
 
-                        avatarGroup.appendChild(userAvatar)
-                    }
+                        		scene.appendChild(userBundle);
+                        		userBundle.appendChild(userAvatar);
 
-					//Add user to user console
-					var current = userList[key];
-            		var userListEntry = document.createElement('span');
-            		var newPLine = document.createElement('p');
-           			userListEntry.setAttribute("id", key);
-           			userListEntry.innerHTML = (userList[key][0] + " observing at: " + current[1].x +
-                   		", " + current[1].y + ", " + current[1].z);
-            		userConsole.appendChild(newPLine);					
-            		userConsole.appendChild(userListEntry);
+                        		//Add a message to the chat window that someone is joining
+                        		var welcomeMessage = "" + publicName + " is joining the scene.";
+                        		socket.emit('chatMessage', "", welcomeMessage);
+                    		} 
 
+                    		//if adding someone else, add them to the group of other avatars
+                    		else {
+
+                        		avatarGroup.appendChild(userAvatar)
+                    		}
+
+							//Add user to user console
+							var current = userList[key];
+    		        		var userListEntry = document.createElement('span');
+        		    		var newPLine = document.createElement('p');
+           					userListEntry.setAttribute("id", key);
+           					userListEntry.innerHTML = (userList[key][1] + " observing at: " + current[2].x +
+                   				", " + current[2].y + ", " + current[2].z);
+            				userConsole.appendChild(newPLine);					
+            				userConsole.appendChild(userListEntry);
+						
+							break;
+
+						case "kinect" :
+
+							break;
+
+						default :
+
+							break;
+					}
                 }
             });
 
+           //-------------------------------------------------------
+		   /*
+			* Triggered when a new user connects
+			*/
             socket.on('newuser', function(newestUser, userId) {	
 
                 console.log("New User Fired");
 
-                //Add Users Avatar
-                var avatarGroup = getElementById("avatarGroup");
+				var userSource = newestUser[0];
 
-                var userAvatar = document.createElement('Transform');
+				switch (userSource) {
 
-                userAvatar.setAttribute("translation", newestUser[1].x + " " +
-                        newestUser[1].y + " " + newestUser[1].z);
+					case "web" :
 
-                userAvatar.setAttribute("rotation", newestUser[2][0].x + " " +
-                        newestUser[2][0].y + " " + newestUser[2][0].z + " " +
-                        newestUser[2][1]);
+		                //Add Users Avatar
+        		        var avatarGroup = getElementById("avatarGroup");
 
-                userAvatar.setAttribute("id", userId + "Avatar");
+                		var userAvatar = document.createElement('Transform');
 
-                console.log("Created node: " + userAvatar.getAttribute("id"));
+                		userAvatar.setAttribute("translation", newestUser[2].x + " " +
+                        	newestUser[2].y + " " + newestUser[2].z);
 
-                var inlineElement = document.createElement('inline');
-                inlineElement.setAttribute("id", userId + "Inline");
-                inlineElement.setAttribute("url", newestUser[3]);
+                		userAvatar.setAttribute("rotation", newestUser[3][0].x + " " +
+                        	newestUser[3][0].y + " " + newestUser[3][0].z + " " +
+                        	newestUser[3][1]);
 
-                userAvatar.appendChild(inlineElement);
-                avatarGroup.appendChild(userAvatar);
+                		userAvatar.setAttribute("id", userId + "Avatar");
 
-                //Update HTML
-                console.log("Adding User: ", userId);
-        		var userList = getElementById("users");
-       			var userListEntry = document.createElement('span');
-       			var newPLine = document.createElement('p');
-        		userListEntry.setAttribute("id", userId);
-        		userListEntry.innerHTML = (newestUser[0] + " observing at: " +
-                	newestUser[1].x + ", " + newestUser[1].y + ", " +
-                	newestUser[1].z);
-        		userList.appendChild(newPLine);
-        		userList.appendChild(userListEntry);
+                		console.log("Created node: " + userAvatar.getAttribute("id"));
+
+                		var inlineElement = document.createElement('inline');
+                		inlineElement.setAttribute("id", userId + "Inline");
+                		inlineElement.setAttribute("url", newestUser[4]);
+
+                		userAvatar.appendChild(inlineElement);
+                		avatarGroup.appendChild(userAvatar);
+
+                		//Update HTML
+                		console.log("Adding User: ", userId);
+        				var userList = getElementById("users");
+       					var userListEntry = document.createElement('span');;
+       					var newPLine = document.createElement('p');
+        				userListEntry.setAttribute("id", userId);
+        				userListEntry.innerHTML = (newestUser[1] + " observing at: " +
+                			newestUser[2].x + ", " + newestUser[2].y + ", " +
+                			newestUser[2].z);
+        				userList.appendChild(newPLine);
+        				userList.appendChild(userListEntry);
+
+						break;
+
+					case "kinect" :
+
+						break;
+
+					default :
+
+						break;
+				}
+
             });
 
-           /**
-			* Update X3D Scene
-			*
+           //-------------------------------------------------------
+		   /*
+			* Hit when a client changes their position
 			*/
+			socket.on('clientUpdate', function(user, id) {
 
-			socket.on('update', function(updatedUser, userId) {
+				console.log("Update Fired");
 
-                console.log("Update Fired");
+				//user = [source, publicName, pos, rot, avatarType, ...];
 
-                var userTransform = document.getElementById(userId + "Bundle");
+				var userSource = user[0];
 
-                if(userTransform == null) {
+				var userTransform = document.getElementById(id + "Bundle");
 
-                    userTransform = document.getElementById(userId + "Avatar");
+               	if (userTransform == null) {
 
-                    if(userTransform == null) {
-                        return;
+               		userTransform = document.getElementById(id + "Avatar");
+
+                    if (userTransform == null) {
+					
+						return;
                     }
-                }
+                }	
+				
+				switch (userSource) {
 
-				userTransform.setAttribute("translation", updatedUser[1].x + " " + 
-					updatedUser[1].y + " " + updatedUser[1].z);
+					case "web" :
 
-				userTransform.setAttribute("rotation", updatedUser[2][0].x + " " + 
-					updatedUser[2][0].y + " " + updatedUser[2][0].z + " " +
-					updatedUser[2][1]);
+						if (user[4] != avatarType) {
+							avatarType = user[4];
+                			var userAvatar = getElementById(id + "Inline");
+               				userAvatar.setAttribute("url", user[4]);  
+						}
+
+						userTransform.setAttribute("translation", user[2].x + " " + 
+						user[2].y + " " + user[2].z);
+
+						userTransform.setAttribute("rotation", user[3][0].x + " " + 
+							user[3][0].y + " " + user[3][0].z + " " +
+							user[3][1]);
                 
-				//Update HTML
-                getElementById(userId).innerHTML = (updatedUser[0] + " observing at: " 
-					+ updatedUser[1].x + "," + updatedUser[1].y + ", " 
-					+ updatedUser[1].z);	
-            });
+						//Update HTML
+                		getElementById(id).innerHTML = (user[1] + " observing at: " 
+							+ user[2].x + "," + user[2].y + ", " + user[2].z);
+	
+						break;
 
-            socket.on('deleteuser', function(userId) {
+					case "kinect" :
 
-                // Remove the avatar from the scene.
-                var removeAvatar = document.getElementById(userId + "Avatar");
+						break;
 
-                if(removeAvatar != null) {
+					default :
 
-                    var avatars = getElementById("avatarGroup");
-                    avatars.removeChild(removeAvatar);
-                }
+						break;
+				}
+			});
+            
+		   //-------------------------------------------------------
+		   /*
+			* Triggered when a message has been posted to the chatroom
+			*/
+			socket.on('chatUpdate', function(userName, message) {
 
-                //Remove User's HTML Content
-                var users = getElementById("users");
-        		var remove = getElementById(userId);
-        		users.removeChild(remove);
-            });
+				var newMessage = document.createElement('li');
 
-            //-------------------------------------------------------
-            /*
-             * Triggered when someone changes their avatar
-             *
-             */
-            socket.on('changeAvatar', function(id, avatar) {
+				if (userName != "") {
 
-                var userAvatar = getElementById(id + "Inline");
-                userAvatar.setAttribute("url", avatar);    
-            });
+					var nameTag = document.createElement('span');
+					nameTag.innerHTML = "<em>" + userName + "</em>";
 
-            //-------------------------------------------------------
-            /*
-             * Triggered when a message has been posted to the chatroom
-             *
-             */
-            socket.on('newmessage', function(userName, message) {
+					newMessage.appendChild(nameTag);
+                	newMessage.appendChild(document.createElement("br"));
+	                newMessage.appendChild(document.createTextNode(message));
 
-                var newMessage = document.createElement('li');
+				} else {
 
-                var nameTag = document.createElement('span');
-                nameTag.innerHTML = "<em>" + userName + "</em>";
-
-                newMessage.appendChild(nameTag);
-                newMessage.appendChild(document.createElement("br"));
-                newMessage.appendChild(document.createTextNode(message));
+					var note = document.createElement('span');
+					note.innerHTML = "<em>" + message + "</em>";
+					newMessage.appendChild(note);
+				}
 
                 getElementById("messages").appendChild(newMessage);
-            });
+			});
 
-            //-------------------------------------------------------
-            /*
-             * Triggered when a notification has been posted to the chatroom
-             */
-            socket.on('notification', function(message) {
+		   //-------------------------------------------------------
+		   /*
+			* Triggered when a message has been posted to the chatroom
+			*/
+			socket.on('sceneUpdate', function(id, state) {
 
-                var note = document.createElement('li');
+				console.log("Hit");
 
-                var noteText = document.createElement('span');
-                noteText.innerHTML = "<em>" + message + "</em>";
+                var lightBulb = getElementById("mw__" + id);
 
-                note.appendChild(noteText);
-
-                getElementById("messages").appendChild(note);
-            });
-
-            //-------------------------------------------------------
-            /*
-             * Triggered when someone toggles the lamp in the scene
-             */
-            socket.on('updateEnvironment', function(state) {
-
-                var lightBulb = getElementById("mw__lamp1");
+				console.log(lightBulb);
 
                 var mat = lightBulb.getElementsByTagName("Material");
 
-                var status = mat[0].getAttribute("diffuseColor");
+                if (!state) {
 
-                if (status == ".95, .9, .25") {
                     mat[0].setAttribute("diffuseColor", ".64 .69 .72");
-                } else {
-                    mat[0].setAttribute("diffuseColor", ".95, .9, .25");
+                } 
+				else {
+                    
+					mat[0].setAttribute("diffuseColor", ".95, .9, .25");
                 }
-            });
+			});
 
             //-------------------------------------------------------
             /*
@@ -350,12 +387,36 @@ function init() {
                     avatar.setAttribute("translation", "0 -.5 -.5");
                 }
             });
-
         });
 
-        configureScene();
-        configurePage();
+		configureScene();
+     	configurePage();
 
+        //Add listener to lamp button
+        var lampToggle2 = document.getElementById("mw__lampButton2");
+
+        if(lampToggle2) {
+            
+			lampToggle2.addEventListener("click", function() {
+
+				console.log("Lamp clicked!!");
+
+				socket.emit("environmentChange", lamp2);
+			});
+		}
+
+        //Add listener to lamp button
+        var lampToggle1 = document.getElementById("mw__lampButton1");
+
+        if(lampToggle1) {
+            
+			lampToggle1.addEventListener("click", function() {
+
+				console.log("Lamp clicked!!");
+
+				socket.emit("environmentChange", lamp1);
+			});
+		}
     }
 
     //-------------------------------------------------------
@@ -366,7 +427,7 @@ function init() {
     {
         //Set up camera to provide location data
         var x3d = document.getElementsByTagName("X3D")[0];
-        var camera = x3d.runtime.getActiveBindable("Viewpoint");
+        camera = x3d.runtime.getActiveBindable("Viewpoint");
 
 		//Attach default camera if none exists
 		if (camera == undefined) {
@@ -389,22 +450,10 @@ function init() {
 		}
 
         //Add listener to camera to update server with location data
-        camera.addEventListener('viewpointChanged', positionUpdated);
-
-        //Add listener to lamp button
-        var lampToggle = document.getElementById("mw__lampToggle");
-
-        if(lampToggle) {
-            console.log("Adding Event Listener");
-            
-            lampToggle.addEventListener('click', function(e) {
-                console.log("You toggled the lamp!");
-                socket.emit('environmentChange');
-            });
-        }
+        camera.addEventListener('viewpointChanged', sendUpdate);
     }
 
-    //-------------------------------------------------------
+	//-------------------------------------------------------
     /*
      * Sets up chat window and user toolbar
      */
@@ -415,8 +464,12 @@ function init() {
 
         selectAvatar.addEventListener('change', function() {
 
-            socket.emit('newavatar', uniqueId, selectAvatar.value);
-        });
+			console.log("Avatar change");
+
+			var packet = [source, publicName, pos, rot, selectAvatar.value];
+
+			socket.emit('serverUpdate', uniqueId, packet);
+		});
 
         //Initialize buttons and listeners for chat function
         var sendButton = getElementById("sendButton");
@@ -451,12 +504,12 @@ function init() {
         });
     }
 
-    //-------------------------------------------------------
-    /*
-     * Sends position data to server
-     */
-    function positionUpdated(e)
-    {	
+   //-------------------------------------------------------
+   /*
+	* Send position data to server if change is great than 1cm
+	*/
+	function sendUpdate(e) {
+
 		if (uniqueId != null) {
 
 			if (Math.abs(pos.x - e.position.x) >= .001 ||
@@ -466,11 +519,13 @@ function init() {
 				pos = e.position;
 				rot = e.orientation;
 
-				//Tell the server that this client has moved and send new location data
-				socket.emit('updateposition', uniqueId, publicName, pos, rot, avatarType);
+				var packet = [source, publicName, pos, rot, avatarType];
+
+				socket.emit('serverUpdate', uniqueId, packet);
+
 			}
 		}
-    }
+	}
 
     //-------------------------------------------------------
     /*
@@ -489,6 +544,6 @@ function init() {
         }
 
         console.log("Sending a Message!");
-        socket.emit('chatmessage', uniqueId, message);
+        socket.emit('chatMessage', publicName, message);
     }
 }
