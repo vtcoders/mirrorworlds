@@ -9,7 +9,6 @@ var pos = {};
 var rot = {};
 var avatarType = "avatars/FemaleTeen_aopted.x3d";
 var model;
-var camera;
 var exit;
 
 //-------------------------------------------------------
@@ -103,7 +102,12 @@ function init() {
 
 				console.log("Initiate");
 
+				// Save unique id provided by server
+
 				uniqueId = myId;
+
+				// If no public name was entered in the prompt,
+				// name defaults to unique id
 
 				if (publicName == "") {
 
@@ -117,9 +121,12 @@ function init() {
 				var userConsole = getElementById("users");
 				userConsole.innerHTML = "";
 
+				//Add content for each of the users
+
                 for (var key in userList) {
 
 					//current = [source, publicName, pos, rot, avatarType, ...];
+
                     var current = userList[key];
 					var currentSource = current[0];
 
@@ -130,21 +137,25 @@ function init() {
 						case "web" :
 
 		                    //Generate a Transform for key's avatar
+
         		            var userAvatar = document.createElement('Transform');
                 		    userAvatar.setAttribute("translation", "0 -.5 .5");
                     		userAvatar.setAttribute("rotation", "0 0 0 0");
                     		userAvatar.setAttribute("id", key + "Avatar");
 
                     		//Generate x3d model of avatar
+
                     		var characterOfAvatar = document.createElement('inline');
                     		characterOfAvatar.setAttribute("id", key + "Inline");
 
                     		characterOfAvatar.setAttribute("url", current[4]);
 
                     		//Add x3d model to the avatar Transform
+
                    		 	userAvatar.appendChild(characterOfAvatar);
 
                     		//if adding self, add to a bundle with camera
+
                     		if(key == uniqueId) {
 
                        			var userBundle = document.createElement('Transform');
@@ -162,6 +173,7 @@ function init() {
                         		userBundle.appendChild(userAvatar);
 
                         		//Add a message to the chat window that someone is joining
+
                         		var welcomeMessage = "" + publicName + " is joining the scene.";
                         		socket.emit('chatMessage', "", welcomeMessage);
                     		} 
@@ -172,7 +184,7 @@ function init() {
                         		avatarGroup.appendChild(userAvatar)
                     		}
 
-							//Add user to user console
+							//Add user to HTML console
 							var current = userList[key];
     		        		var userListEntry = document.createElement('span');
         		    		var newPLine = document.createElement('p');
@@ -199,7 +211,7 @@ function init() {
 		   /*
 			* Triggered when a new user connects
 			*/
-            socket.on('newuser', function(newestUser, userId) {	
+            socket.on('addUser', function(newestUser, userId) {	
 
                 console.log("New User Fired");
 
@@ -210,6 +222,7 @@ function init() {
 					case "web" :
 
 		                //Add Users Avatar
+
         		        var avatarGroup = getElementById("avatarGroup");
 
                 		var userAvatar = document.createElement('Transform');
@@ -232,7 +245,8 @@ function init() {
                 		userAvatar.appendChild(inlineElement);
                 		avatarGroup.appendChild(userAvatar);
 
-                		//Update HTML
+                		//Update HTML Console
+
                 		console.log("Adding User: ", userId);
         				var userList = getElementById("users");
        					var userListEntry = document.createElement('span');;
@@ -254,8 +268,45 @@ function init() {
 
 						break;
 				}
-
             });
+
+           //-------------------------------------------------------
+		   /*
+			* Hit when another client is leaving the scene
+			*/
+			socket.on('deleteUser', function(user, id) {
+
+				var userSource = user[0];
+
+				switch (userSource) {
+
+					case "web" :
+
+						// Remove the avatar from the scene.
+                		var removeAvatar = document.getElementById(id + "Avatar");
+
+                		if(removeAvatar != null) {
+
+                    		var avatars = getElementById("avatarGroup");
+                    		avatars.removeChild(removeAvatar);
+                		}
+
+                		//Remove User's HTML Content
+                		var users = getElementById("users");
+        				var remove = getElementById(id);
+        				users.removeChild(remove);
+
+						break;
+
+					case "kinect" :
+
+						break;
+
+					default :
+
+						break;
+				}
+			});
 
            //-------------------------------------------------------
 		   /*
@@ -298,7 +349,8 @@ function init() {
 							user[3][0].y + " " + user[3][0].z + " " +
 							user[3][1]);
                 
-						//Update HTML
+						//Update HTML Console
+
                 		getElementById(id).innerHTML = (user[1] + " observing at: " 
 							+ user[2].x + "," + user[2].y + ", " + user[2].z);
 	
@@ -347,11 +399,7 @@ function init() {
 			*/
 			socket.on('sceneUpdate', function(id, state) {
 
-				console.log("Hit");
-
                 var lightBulb = getElementById("mw__" + id);
-
-				console.log(lightBulb);
 
                 var mat = lightBulb.getElementsByTagName("Material");
 
@@ -399,9 +447,7 @@ function init() {
             
 			lampToggle2.addEventListener("click", function() {
 
-				console.log("Lamp clicked!!");
-
-				socket.emit("environmentChange", lamp2);
+				socket.emit('environmentChange', "lamp2");
 			});
 		}
 
@@ -412,9 +458,7 @@ function init() {
             
 			lampToggle1.addEventListener("click", function() {
 
-				console.log("Lamp clicked!!");
-
-				socket.emit("environmentChange", lamp1);
+				socket.emit('environmentChange', "lamp1");
 			});
 		}
     }
@@ -427,7 +471,7 @@ function init() {
     {
         //Set up camera to provide location data
         var x3d = document.getElementsByTagName("X3D")[0];
-        camera = x3d.runtime.getActiveBindable("Viewpoint");
+        var camera = x3d.runtime.getActiveBindable("Viewpoint");
 
 		//Attach default camera if none exists
 		if (camera == undefined) {
@@ -451,7 +495,7 @@ function init() {
 
         //Add listener to camera to update server with location data
         camera.addEventListener('viewpointChanged', sendUpdate);
-    }
+	}
 
 	//-------------------------------------------------------
     /*
@@ -522,7 +566,6 @@ function init() {
 				var packet = [source, publicName, pos, rot, avatarType];
 
 				socket.emit('serverUpdate', uniqueId, packet);
-
 			}
 		}
 	}
