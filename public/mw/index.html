@@ -13,27 +13,48 @@
     </script>
 </head>
 <body onload="main();">
-    <h1>Mirror Worlds default index</h1>
+    
+	<div id="topNav">
+		<h1>Mirror Worlds Online</h1>
 
-    <p>Your Mirror Worlds Service is up and running.
-      This page is a temporary index page to
-      get you up and running. Find this file and replace it.</p>
+   	 	<p>Your Mirror Worlds Service is up and running.
+    	  This page is a temporary index page to
+     	 get you up and running. Find this file and replace it.</p>
 
-    <h3>Links</h3>
+		<a href="http://www.icat.vt.edu/mirrorworlds/">The Mirror Worlds
+                Homepage</a>
 
-    <ul>
-        <li><a href="world.html?file=example.x3d">Example World</a> is a simple
-            mirror worlds example.</li>
-        <li><a href="viewer.html?file=example.x3d">View example world
-                without widgets or collaboration</a></li> 
-        <li><a
-            href="clipplane.html?file=example.x3d">Clip
-            plane example with "simple example" model</a></li>
-        <li><a href="http://www.icat.vt.edu/mirrorworlds/">The Mirror Worlds
-                Homepage</a></li>
-        <li><a href="https://github.com/vtcoders/mirrorworlds">The
-                Mirror Worlds GitHub repository</a></li>
-    </ul>
+	</div>
+	<div id="listWorlds">
+		<h2>Available Worlds</h2>
+
+		<div id="worldContainer">
+			<div class="worldBox">
+				<a class="worldLink" href="world.html?file=example.x3d">
+					<div class="worldPic" style="background-image: url('images/exampleWorld.jpg')"></div>
+					<span class="worldName">Example World</span>
+				</a>
+			</div>
+	
+			<div class="worldBox">
+				<a class="worldLink"  href="world.html?file=/MACDec12/MOSS_exterior.x3d">
+					<div class="worldPic" style="background-image: url('images/macWorld.jpg')"></div>
+					<span class="worldName">Moss Arts Center</span>
+				</a>
+			</div>
+
+			<div class="worldBox">
+				<a class="worldLink" href="world.html?file="clipplane.html?file=example.x3d">
+					<div class="worldPic" style="background-image: url('images/clipWorld.jpg')"></div>
+					<span class="worldName">Clippane Example</span>
+				</a>
+			</div>
+		</div>
+	</div>
+		
+	<div style="text-align:center">
+		<a href="https://github.com/vtcoders/mirrorworlds"><button id="github" type="button">Check us out on GitHub</button></a>
+	</div>
 
     <pre id=url></pre>
 </body>
