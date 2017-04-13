@@ -3,7 +3,7 @@
 hostname = $(shell hostname)
 
 # The file "config.make" is from running ./configure [options]
-# It is not required, and we have default values in this files
+# It is not required, and we have default values in this file
 # if it does not exist.
 -include config.make
 
@@ -60,11 +60,15 @@ node_modules = lib/node_modules
 # we need to change built_js_files and built_css_files
 built_js_files = $(patsubst %.jsp,%.js,$(wildcard public/mw/*.jsp))
 built_css_files = $(patsubst %.cs,%.css,$(wildcard public/mw/*.cs))
+built_x3d_files = $(patsubst %.x3d.bash,%.x3d,$(wildcard public/mw/avatars/*.x3d.bash))
+
 
 keys = etc/key.pem etc/cert.pem
 
 # version of x3dom to install
-x3dom_version = x3dom-1.7.1
+x3dom_version = 1.7.1
+
+x3dom_name = x3dom-$(x3dom_version)
 # The directory where we unzip the x3dom files
 x3dom_dir = public/mw/x3dom
 
@@ -76,7 +80,7 @@ css_files = $(sort $(wildcard etc/*.css) $(built_css_files))
 # TODO: Is this required to be a flat single directory?
 public_files = $(sort $(js_files) $(css_files)\
  $(wildcard public/mw/*)\
- $(x3dom_dir) public/mw/avatars)
+ $(x3dom_dir))
 
 # files we install in etc/
 etc_files = $(keys)
@@ -87,14 +91,18 @@ built_files = $(sort\
  mw_server lib/mw_server bin/mw_server\
  $(built_js_files)\
  $(built_css_files)\
- $(keys)\
- $(x3dom_dir)\
- $(node_modules))
+ $(built_x3d_files)\
+ $(keys))
+
+download_files = $(node_modules) $(x3dom_dir)
 
 sep = /////////////////////////////////////////////////////\n
 
 
-build: $(built_files)
+build: $(download_files) $(built_files)
+
+download: $(download_files)
+
 
 # We npm get a copy of socket.io and other dependencies
 # via the file lib/package.json
@@ -117,9 +125,6 @@ bin/mw_server: bin
 mw_server:
 	ln -s lib/mw_server $@
 
-# This javaScript is used by the client and the nodeJS server,
-# so we install a symlink so it's accessible from two paths.
-
 lib/mw_server: lib/mw_server.js GNUmakefile config.make
 	(mkdir -p lib &&\
 	echo "$(shabang)" > $@ &&\
@@ -136,6 +141,13 @@ lib/mw_server: lib/mw_server.js GNUmakefile config.make
 etc:
 	mkdir etc
 
+
+$(built_x3d_files): public/mw/avatars/teapot.x3d.in
+
+%.x3d: %.x3d.bash 
+	bash $(@).bash public/mw/avatars/teapot.x3d.in > $@ || rm -f $@
+
+
 # ref: http://superuser.com/questions/226192/openssl-without-prompt
 $(keys): etc
 	openssl req\
@@ -150,8 +162,9 @@ $(keys): etc
 
 $(x3dom_dir):
 	mkdir -p $(x3dom_dir) && (cd $(x3dom_dir) &&\
-          wget http://x3dom.org/download/1.7.1/$(x3dom_version).zip &&\
-          unzip $(x3dom_version).zip) || (rm -rf $(x3dom_dir) ; exit 1)
+          wget http://x3dom.org/download/$(x3dom_version)/$(x3dom_name).zip &&\
+	  sha256sum -c ../../../$(x3dom_name).zip.sha256 &&\
+          unzip $(x3dom_name).zip) || exit 1
 
 
 %.js: %.jsp
@@ -167,12 +180,16 @@ install: mkdirs build
 	cp -R $(etc_files) $(ETC)/
 	cp -R lib/* $(PREFIX)/lib/
 	cp -R $(public_files) $(PUBLIC)/mw/
+	rm -f $(PUBLIC)/mw/avatars/*.in $(PUBLIC)/mw/avatars/*.bash
 	ln -fs ../lib/mw_server $(BIN)/mw_server
 	rm $(PREFIX)/lib/mw_server.js
 
 clean:
-	rm -rf $(built_files) bin etc isolate-*-v8.log
+	rm -rf $(built_files)
+	rm -rf bin etc 
+	rm -f isolate-*-v8.log
 
-distclean: clean
+distclean cleaner: clean
 	rm -f config.make
+	rm -rf $(download_files)
 

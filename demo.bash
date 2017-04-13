@@ -7,7 +7,7 @@ if [ -n "$1" ] ; then
 
   Usage: $0
 
-    This script programs makes an effert to demonstrate this
+    This script programs makes an effort to demonstrate this
   software package in a simple "Hello World" like way.
 
   It tries to run the server and launch a browser that connects
@@ -23,7 +23,7 @@ cd "$(dirname $0)"
 # The software will not run if the node dependencies
 # are not gotten.
 if [ ! -d lib/node_modules ] ; then
-    make
+    make || exit 1
 fi
 
 http_port=9999
