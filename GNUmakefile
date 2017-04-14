@@ -89,14 +89,17 @@ built_files = $(sort\
  mw_server lib/mw_server bin/mw_server\
  $(built_js_files)\
  $(built_css_files)\
- $(keys)\
- $(x3dom_dir)\
- $(node_modules))
+ $(keys))
+
+download_files = $(node_modules) $(x3dom_dir)
 
 sep = /////////////////////////////////////////////////////\n
 
 
-build: $(built_files)
+build: $(download_files) $(built_files)
+
+download: $(download_files)
+
 
 # We npm get a copy of socket.io and other dependencies
 # via the file lib/package.json
@@ -175,8 +178,11 @@ install: mkdirs build
 	rm $(PREFIX)/lib/mw_server.js
 
 clean:
-	rm -rf $(built_files) bin etc isolate-*-v8.log
+	rm -rf $(built_files)
+	rm -rf bin etc 
+	rm -f isolate-*-v8.log
 
-distclean: clean
+distclean cleaner: clean
 	rm -f config.make
+	rm -rf $(download_files)
 
