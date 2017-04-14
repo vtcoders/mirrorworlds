@@ -104,7 +104,7 @@ build: $(download_files) $(built_files)
 download: $(download_files)
 
 
-# We npm get a copy of socket.io and other dependencies
+# We npm get a copy of ws and other dependencies
 # via the file lib/package.json
 $(node_modules):
 	cd lib/ && npm install
