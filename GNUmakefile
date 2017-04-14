@@ -76,7 +76,6 @@ css_files = $(sort $(wildcard etc/*.css) $(built_css_files))
 # TODO: Is this required to be a flat single directory?
 public_files = $(sort $(js_files) $(css_files)\
  $(wildcard public/mw/*)\
- public/mw/enviro-object.js\
  $(x3dom_dir) public/mw/avatars)
 
 # files we install in etc/
@@ -85,7 +84,6 @@ etc_files = $(keys)
 
 built_files = $(sort\
  bin\
- public/mw/enviro-object.js\
  mw_server lib/mw_server bin/mw_server\
  $(built_js_files)\
  $(built_css_files)\
@@ -124,8 +122,6 @@ mw_server:
 
 # This javaScript is used by the client and the nodeJS server,
 # so we install a symlink so it's accessible from two paths.
-public/mw/enviro-object.js:
-	ln -s ../../lib/enviro-object.js $@
 
 lib/mw_server: lib/mw_server.js GNUmakefile config.make
 	(mkdir -p lib &&\

@@ -4,14 +4,8 @@ var socket;
 // Unique Identifier for each client
 // connection provided by server
 var uniqueId;
-<<<<<<< HEAD
-=======
-var spawnPosition = {"x": 2, "y": 1.5, "z": 5};
-var spawnOrientation = [{"x": 0, "y": 0, "z": 0}, 0];
-var avatarType = "avatars/FemaleTeen_aopted.x3d";
 var model;
 var exit;
->>>>>>> develop
 
 // This is where all user information is stored.
 var clientInfo = {
