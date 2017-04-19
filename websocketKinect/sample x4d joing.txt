@@ -1,0 +1,24 @@
+
+
+<x3d>
+<transform id='Joint1'>
+     <shape>
+            <appearance>
+                <material diffuseColor='1 0 0'></material>
+            </appearance>
+            <box></box>
+        </shape>
+		</transform>
+		
+	<transform id='Joint2'>
+     <shape>
+            <appearance>
+                <material diffuseColor='1 0 0'></material>
+            </appearance>
+            <box></box>
+        </shape>
+		</transform>	
+		
+		...
+		
+		</X3D>

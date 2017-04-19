@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE X3D PUBLIC "ISO//Web3D//DTD X3D 3.0//EN" "http://www.web3d.org/specifications/x3d-3.0.dtd">
+<X3D xmlns:xsd='http://www.w3.org/2001/XMLSchema-instance' profile='Full' version='3.0' xsd:noNamespaceSchemaLocation='http://www.web3d.org/specifications/x3d-3.0.xsd'>
+
+    <Scene>  
+        <IOSensor DEF='kinect' type='Kinect' FlipImages='TRUE'>
+            <field accessType='outputOnly' 	name='Depth' 		     type='SFImage'/>
+			
+			<field accessType='outputOnly'  name='JointPositions'    type='MFVec3f'/>
+        </IOSensor>
+
+        <ImageBackground>
+            <PixelTexture2D DEF='image'/>
+        </ImageBackground>
+
+        <Group DEF='skeleton'>
+        </Group>
+
+        <Shape DEF='lines'>
+            <Appearance>
+                <LineProperties linewidthScaleFactor='4'/>
+                <Material emissiveColor='0 1 0'/>
+            </Appearance>
+        </Shape>
+
+        <Script DEF='script'>
+            <field name='joint_changed'       accessType='inputOnly'   type='MFVec3f' />
+			<field name='numusers_changed'    accessType='inputOnly'   type='MFInt32' />
+            
+            <field accessType='initializeOnly' name='skeleton' type='SFNode'>
+                <Group USE='skeleton' />
+            </field>
+            
+            <field accessType='initializeOnly' name='lines' type='SFNode'>
+                <Shape USE='lines' />
+            </field>
+
+            <![CDATA[ecmascript:		
+                var joints = new Array();
+                
+                function create_skeleton(num_joints) 
+                {
+                    for(var i=0; i<num_joints; ++i)
+                    {
+                        var transform = Browser.currentScene.createNode("Transform");
+                        var shape = Browser.currentScene.createNode("Shape");
+                        var box = Browser.currentScene.createNode("Box");
+                        var appearance = Browser.currentScene.createNode("Appearance");
+                        var material = Browser.currentScene.createNode("Material");
+
+                        material.diffuseColor = SFColor(Math.random(), Math.random(), Math.random());
+                        appearance.material = material;
+                        shape.geometry = box;
+                        shape.appearance = appearance;
+                        transform.children[0] = shape;
+                        transform.scale = SFVec3f(0.1, 0.1, 0.1);
+
+                        joints[i] = transform;
+
+                        skeleton.children[skeleton.children.length] = transform;
+                    }
+                }
+                        
+                var xnjoints = 
+                {
+                    "NUI_SKELETON_POSITION_HEAD":0,   
+                    "NUI_SKELETON_POSITION_SPINE":1,   
+                    "NUI_SKELETON_POSITION_SHOULDER_CENTER":2,   
+                    "NUI_SKELETON_POSITION_HIP_CENTER":3,  
+                    "NUI_SKELETON_POSITION_SHOULDER_LEFT":4,   
+                    "NUI_SKELETON_POSITION_ELBOW_LEFT":5,   
+                    "NUI_SKELETON_POSITION_WRIST_LEFT":6,  
+                    "NUI_SKELETON_POSITION_HAND_LEFT":7,   
+                    "NUI_SKELETON_POSITION_SHOULDER_RIGHT":8,   
+                    "NUI_SKELETON_POSITION_ELBOW_RIGHT":9,   
+                    "NUI_SKELETON_POSITION_WRIST_RIGHT":10,   
+                    "NUI_SKELETON_POSITION_HAND_RIGHT":11,   
+                    "NUI_SKELETON_POSITION_HIP_LEFT":12,   
+                    "NUI_SKELETON_POSITION_KNEE_LEFT":13,   
+                    "NUI_SKELETON_POSITION_ANKLE_LEFT":14,   
+                    "NUI_SKELETON_POSITION_FOOT_LEFT":15,   
+                    "NUI_SKELETON_POSITION_HIP_RIGHT":16,   
+                    "NUI_SKELETON_POSITION_KNEE_RIGHT":17,   
+                    "NUI_SKELETON_POSITION_ANKLE_RIGHT":18,   
+                    "NUI_SKELETON_POSITION_FOOT_RIGHT":19,   
+                };
+                
+                function initialize()
+                {
+                    create_skeleton(20);
+                }
+                
+                var lines_temp;
+                
+                function draw_limb(j1, j2)
+                {
+                    lines_temp.coord.point[lines_temp.coord.point.length] = joints[j1].translation;
+                    lines_temp.coord.point[lines_temp.coord.point.length] = joints[j2].translation;
+                    lines_temp.vertexCount[lines_temp.vertexCount.length] = 2;
+                }
+
+                function joint_changed(value, t)
+                {
+                    for(var i=0; i<joints.length; ++i)
+                    {
+						var r = 2;
+                        joints[i].translation = SFVec3f(-value[i].x*r, value[i].y*r, value[i].z*r);
+                    }
+                    
+                    lines_temp = Browser.currentScene.createNode('LineSet');
+                    lines_temp.coord = Browser.currentScene.createNode('Coordinate3D');
+                    
+                    draw_limb(xnjoints.NUI_SKELETON_POSITION_HEAD, xnjoints.NUI_SKELETON_POSITION_SHOULDER_CENTER);
+
+                    draw_limb(xnjoints.NUI_SKELETON_POSITION_SHOULDER_CENTER, xnjoints.NUI_SKELETON_POSITION_SHOULDER_LEFT);
+                    draw_limb(xnjoints.NUI_SKELETON_POSITION_SHOULDER_LEFT, xnjoints.NUI_SKELETON_POSITION_ELBOW_LEFT);
+                    draw_limb(xnjoints.NUI_SKELETON_POSITION_ELBOW_LEFT, xnjoints.NUI_SKELETON_POSITION_WRIST_LEFT);
+					draw_limb(xnjoints.NUI_SKELETON_POSITION_WRIST_LEFT, xnjoints.NUI_SKELETON_POSITION_HAND_LEFT);
+
+                    draw_limb(xnjoints.NUI_SKELETON_POSITION_SHOULDER_CENTER, xnjoints.NUI_SKELETON_POSITION_SHOULDER_RIGHT);
+                    draw_limb(xnjoints.NUI_SKELETON_POSITION_SHOULDER_RIGHT, xnjoints.NUI_SKELETON_POSITION_ELBOW_RIGHT);
+                    draw_limb(xnjoints.NUI_SKELETON_POSITION_ELBOW_RIGHT, xnjoints.NUI_SKELETON_POSITION_WRIST_RIGHT);
+					draw_limb(xnjoints.NUI_SKELETON_POSITION_WRIST_RIGHT, xnjoints.NUI_SKELETON_POSITION_HAND_RIGHT);
+			
+					draw_limb(xnjoints.NUI_SKELETON_POSITION_SHOULDER_CENTER, xnjoints.NUI_SKELETON_POSITION_SPINE);
+					draw_limb(xnjoints.NUI_SKELETON_POSITION_SPINE, xnjoints.NUI_SKELETON_POSITION_HIP_CENTER);
+
+					draw_limb(xnjoints.NUI_SKELETON_POSITION_HIP_CENTER, xnjoints.NUI_SKELETON_POSITION_HIP_LEFT);
+					draw_limb(xnjoints.NUI_SKELETON_POSITION_HIP_LEFT, xnjoints.NUI_SKELETON_POSITION_KNEE_LEFT);
+                    draw_limb(xnjoints.NUI_SKELETON_POSITION_KNEE_LEFT, xnjoints.NUI_SKELETON_POSITION_ANKLE_LEFT);
+                    draw_limb(xnjoints.NUI_SKELETON_POSITION_ANKLE_LEFT, xnjoints.NUI_SKELETON_POSITION_FOOT_LEFT);
+					
+					draw_limb(xnjoints.NUI_SKELETON_POSITION_HIP_CENTER, xnjoints.NUI_SKELETON_POSITION_HIP_RIGHT);
+					draw_limb(xnjoints.NUI_SKELETON_POSITION_HIP_RIGHT, xnjoints.NUI_SKELETON_POSITION_KNEE_RIGHT);
+                    draw_limb(xnjoints.NUI_SKELETON_POSITION_KNEE_RIGHT, xnjoints.NUI_SKELETON_POSITION_ANKLE_RIGHT);
+                    draw_limb(xnjoints.NUI_SKELETON_POSITION_ANKLE_RIGHT, xnjoints.NUI_SKELETON_POSITION_FOOT_RIGHT);
+
+                    lines.geometry = lines_temp;
+                }
+            ]]>
+        </Script>
+        
+        <ROUTE fromNode='kinect' fromField='JointPositions'    toNode='script'	toField='joint_changed'/>
+        <ROUTE fromNode='kinect' fromField='Depth' 			   toNode='image'	toField='set_image'/>
+    </Scene>
+</X3D>

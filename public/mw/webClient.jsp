@@ -4,8 +4,6 @@ var socket;
 // Unique Identifier for each client
 // connection provided by server
 var uniqueId;
-var model;
-var exit;
 
 // This is where all user information is stored.
 var clientInfo = {
