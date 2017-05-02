@@ -54,6 +54,24 @@ mw_server --doc_root ${HOME}/public_html --http_port=3333 > access.log 2> error.
 
 ## Developer Notes
 
+### Web Client Functions:
+
+initiate - This method is only fired once when client connects for the 
+first time. This sets up the user's unique id provided by the server, the
+avatars in the scene, and the current status of item in the scene (i.e. lamps).
+ 
+addUser - This sets up an avatar for when a new user connects
+
+deleteUser - This removes the appropriate avatar from the scene when a user
+disconnects
+
+clientUpdate - Primary update function that moves the avatars around the scene
+and changes the values in the user console at the bottom of the html page.
+
+chatUpdate - This adds the necessary text to the chat room when someone 
+joins/leaves the scene or posts a message.
+
+sceneUpdate - This updates the state of the items in the scene (i.e. lamps).
 
 ### On file structure
 
