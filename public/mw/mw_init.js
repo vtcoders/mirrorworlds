@@ -36,6 +36,64 @@ function mw_assert(val, msg) {
 }
 
 
+// This starts the popup with widget showing.
+function mw_addPopupDialog(widget, button, func = null,
+        ok = null) {
+
+    if(button.onclick)
+        document.body.appendChild(widget);
+
+    // stop keying <enter> from clicking the button
+    // by removing the onclick callback
+    button.onclick = null;
+    
+    widget.className = 'widget_box';
+
+    var bottom = document.createElement('div');
+    bottom.className = 'widget_bottom';
+
+    var b = document.createElement('button');
+    b.appendChild(document.createTextNode('cancel'));
+    b.onclick = function() {
+    };
+    b.className = 'widget_button';
+    bottom.appendChild(b);
+
+    if(ok) {
+        b = document.createElement('button');
+        b.appendChild(document.createTextNode(' ok '));
+        b.onclick = function() {
+        };
+        b.className = 'widget_button';
+        bottom.appendChild(b);
+    }
+
+    widget.appendChild(bottom);
+    
+    // Start by showing the Popup Dialog.
+    widget.style.visibility = 'visible';
+    var background = document.createElement('div');
+    background.className = 'background_dimmer';
+    document.body.appendChild(background);
+    background.onclick = function() {
+    
+        document.body.removeChild(background);
+        widget.style.visibility = 'hidden';
+        widget.removeChild(bottom);
+
+        // reset the button
+        button.onclick = function() {
+
+            // restart Popup Dialog
+            mw_addPopupDialog(widget, button);
+        }
+        return false;
+    }
+    console.log('MW added popup widget:\n   ' +
+            widget.innerHTML);
+}
+
+
 function _mw_getElementById(id) {
 
     var element = document.getElementById(id);
@@ -478,7 +536,8 @@ function mw_client(userInit = function(mw) {
     // TODO: this is a very dumb subscription policy:
     mw.subscribeAll = true; // all but the sources we provide.
     mw.subscriptions = {};
-
+    mw.sendCount = 0; // a counter to label individual requests.
+    mw.globFuncs = { };
 
     mw.on = function(name, func) {
 
@@ -741,6 +800,22 @@ function mw_client(userInit = function(mw) {
                 description, tagOrJavaScriptSrc);
     };
 
+
+    mw.on('glob', function(sendId, err, files) {
+
+        mw_assert(mw.globFuncs[sendId] !== undefined,
+                'bad glob received id=' + sendId);
+        mw.globFuncs[sendId](err, files);
+        delete mw.globFuncs[sendId];
+    });
+
+
+    mw.glob = function(expression, func) {
+        mw._emit('glob', expression, (++mw.sendId).toString());
+        mw.globFuncs[mw.sendId.toString()] = func;
+    };
+
+
     mw.on('createSource', /*received from the server*/
         function(clientSourceId, serverSourceId, shortName) {
 
@@ -875,6 +950,13 @@ function mw_client(userInit = function(mw) {
         console.log('MW got removeSubscription ' + sourceId);
         mw.unsubscribe(sourceId);
     });
+
+
+    mw.removeSource(sourceId, func = null) {
+
+        mw_emit('removeSubscription', sourceId);
+    }
+
 
 
     return mw;

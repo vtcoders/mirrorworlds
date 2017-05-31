@@ -5,7 +5,8 @@
   "main": "mw_server.js",
   "dependencies": {
     "ws": "2.2.0",
-    "csv": "^0.4.6"
+    "csv": "^0.4.6",
+    "glob": "7.1.1"
   },
   "devDependencies": {
   },
@@ -19,5 +20,7 @@
   "bugs": {
     "url": "https://github.com/vtcoders/mirrorworlds"
   },
-  "homepage": "https://github.com/vtcoders/mirrorworlds"
+
+  "homepage": "https://github.com/vtcoders/mirrorworlds",
+  "license": "AGPL-1.0"
 }

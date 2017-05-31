@@ -69,13 +69,55 @@
     );
 
 
-    // TODO: Get the list of avatars from the server so that
-    // users made add avatars.
-    var avatars = [
-        prefix + '../avatars/red_teapot.x3d',
-        prefix + '../avatars/green_teapot.x3d',
-        prefix + '../avatars/blue_teapot.x3d'
-    ];
+    mw_addActor(prefix + '../mw_popupDialog.css', function() {
+
+    mw.glob('/mw/avatars/*.x3d', function(er, avatars) {
+
+        console.log('glob er=' + er + ' glob avatars=' + avatars);
+        if(er) {
+            console.log('MW failed to get avatar list:\n   ' +
+            er);
+            return;
+        }
+
+        var avatarIndex = mw.Id%(avatars.length);
+        
+        var button = document.getElementById('select_avatar');
+        if(!button) {
+            button = document.createElement('A');
+            button.href = '#';
+            button.appendChild(document.createTextNode('Select Avatar'));
+            // TODO: could be prettier.
+            document.body.appendChild(button);
+            button.title = 'change avatar';
+        }
+
+        button.onclick = function(e) {
+
+            var div = document.createElement('div');
+            var innerHTML =
+                '<h2>Select an Avatar</h2>\n' +
+                '<select>\n';
+
+            var i;
+            
+            for(i=0;i<avatars.length;++i) {
+                innerHTML +=
+                    '<option value="' + avatars[i] + '"';
+                if(i === avatarIndex)
+                    innerHTML += ' selected="selected"';
+                innerHTML += '>' +
+                    avatars[i].replace(/^.*\/|/g,'').
+                        replace(/\.x3d$/, '').replace(/_/g, ' '); +
+                '</option>\n';
+            }
+
+            innerHTML +='  </select>\n';
+
+            div.innerHTML = innerHTML;
+
+            mw_addPopupDialog(div, button);
+        }
 
 
 
@@ -105,6 +147,7 @@
             mw.sendPayload(/*where to send =*/avatarId,
                         /*what to send =*/avatarId,
                         avatars[(parseInt(avatarId)%(avatars.length))]);
+
 
             // We move "our" avatar on the other clients by sending our
             // viewpoint. The positioning of the Avatar depends on the
@@ -145,5 +188,13 @@
             );
         }
     );
+
+
+    }); // mw.glob('/mw/avatars/*.x3d',...)
+    
+    }); // mw_addActor(prefix + '../mw_popupDialog.css'
+
+
+    // TODO: We need to use javaScript Promise
 
 })();
