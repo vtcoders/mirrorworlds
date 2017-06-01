@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -e
+
+ln -sf ../lib/mw_server mw_server
+# make the mtime newer than the target
+touch mw_server

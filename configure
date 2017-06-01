@@ -139,10 +139,10 @@ while [ -n "$1" ] ; do
             ;;
         --node)
             shift 1
-            shabang="\\#!${1}"
+            shabang="${1}"
             ;;
         --node=*)
-            shabang="\\#!${1#*-node=}"
+            shabang="${1#*-node=}"
             ;;
         --no-compress)
             jscompress=
@@ -169,22 +169,25 @@ EOF
 # This function indirectly puts a variable into
 # the GNUmakefile via the include file config.make
 #
-# Usage: setMakeVar VARIABLE
+# Usage: setMakeVar MAKE_VARIABLE VALUE
 function setMakeVar()
 {
-    if [ -n "${!1}" ] ; then
-        echo "$1 = ${!1}" >> config.make
-        echo "$1 = ${!1}"
+    if [ -n "${!2}" ] ; then
+        echo "$1 = ${!2}" >> config.make
+        echo "$1 = ${!2}"
         val_set=yes
     fi
 }
 
 
-setMakeVar PREFIX
-setMakeVar jscompress
-setMakeVar csscompress
-setMakeVar shabang
-setMakeVar port
+setMakeVar PREFIX PREFIX
+setMakeVar JS_COMPRESS jscompress
+setMakeVar CSS_COMPRESS csscompress
+setMakeVar JSNODE_SHABANG shabang
+setMakeVar HTTP_PORT port
+setMakeVar HTTPS_PORT s_port
+
+[ -z "$val_set" ] && echo "# No values where set when configure ran" >> config.make
 
 [ -z "$val_set" ] && cat << EOF
 
