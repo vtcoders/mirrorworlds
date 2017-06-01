@@ -8,7 +8,7 @@ if [ -n "$1" ] ; then
   Usage: $0
 
     This script programs makes an effort to demonstrate this
-  software package in a simple "Hello World" like way.
+  software package in a simple way.
 
   It tries to run the server and launch a browser that connects
   to the server.
