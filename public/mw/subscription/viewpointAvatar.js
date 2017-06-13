@@ -1,5 +1,6 @@
 // Nesting callbacks in callbacks in callbacks ... etc, tends to be a
-// natural way to code in "callback dependency trees" in javaScript.
+// natural way to code in "callback dependency trees" in javaScript,
+// though it can get a little messy with the deep tabs.
 
 (function() {
 
@@ -7,7 +8,6 @@
     var mw = mw_getScriptOptions().mw;
 
 
-    // TODO: I guess this could be done with a Promise object.
     // The callback to add another users Avatar: The function gets called
     // with the arguments that are sent in mw.sendPayload(avatarId, ...)
     // on another client far below here.
@@ -17,10 +17,6 @@
         // Add an avatar.  avatarId is the server service subscription ID.
         function(avatarId, avatarUrl) {
 
-            // Select avatar based on client ID mw.Id which is from
-            // a counter on the server.
-            var avators = [ ];
-
             mw_addActor(avatarUrl, function(transformNode) {
 
                 // Set the cleanup function after we get the actor model
@@ -28,6 +24,7 @@
                 mw.setUnsubscribeCleanup(avatarId, function(sourceId) {
 
                     if(transformNode !== undefined) {
+                        // Remove the avatar model from the scene graph.
                         transformNode.parentNode.removeChild(transformNode);
                         delete transformNode;
                     }
@@ -43,7 +40,9 @@
                 // them up.
                 //
                 // The first argument MUST be a unique to this execution
-                // context. 
+                // context, hence we use the avatarId in making it.
+                // It maps the (pos, rot) args to a particular avatar
+                // that we created in the current function context.
 
                 mw.recvPayload('moveViewpointAvator_' + avatarId,
 
@@ -55,146 +54,112 @@
                         if(transformNode !== undefined) {
 
                             transformNode.setAttribute('translation',
-                                pos.x + ' ' + pos.y + ' ' + pos.z);
+                                    pos.x + ' ' + pos.y + ' ' + pos.z);
                             transformNode.setAttribute('rotation',
-                                rot[0].x + ' ' + rot[0].y + ' ' +
-                                rot[0].z + ' ' + rot[1]);
-                        }
-                });
- 
-            }, {
+                                    rot[0].x + ' ' + rot[0].y + ' ' +
+                                    rot[0].z + ' ' + rot[1]);
+                            }
+                        });
+
+            },
+            // Options that are passed to the mw_addActor()
+            {
                 containerNodeType: 'Transform'
             });
         }
     );
 
 
-    mw_addActor(prefix + '../mw_popupDialog.css', function() {
-
-    mw.glob('/mw/avatars/*.x3d', function(er, avatars) {
-
-        console.log('glob er=' + er + ' glob avatars=' + avatars);
-        if(er) {
-            console.log('MW failed to get avatar list:\n   ' +
-            er);
-            return;
-        }
-
-        var avatarIndex = mw.Id%(avatars.length);
-        
-        var button = document.getElementById('select_avatar');
-        if(!button) {
-            button = document.createElement('A');
-            button.href = '#';
-            button.appendChild(document.createTextNode('Select Avatar'));
-            // TODO: could be prettier.
-            document.body.appendChild(button);
-            button.title = 'change avatar';
-        }
-
-        button.onclick = function(e) {
-
-            var div = document.createElement('div');
-            var innerHTML =
-                '<h2>Select an Avatar</h2>\n' +
-                '<select>\n';
-
-            var i;
-            
-            for(i=0;i<avatars.length;++i) {
-                innerHTML +=
-                    '<option value="' + avatars[i] + '"';
-                if(i === avatarIndex)
-                    innerHTML += ' selected="selected"';
-                innerHTML += '>' +
-                    avatars[i].replace(/^.*\/|/g,'').
-                        replace(/\.x3d$/, '').replace(/_/g, ' '); +
-                '</option>\n';
-            }
-
-            innerHTML +='  </select>\n';
-
-            div.innerHTML = innerHTML;
-
-            mw_addPopupDialog(div, button);
-        }
+    // We tried using promises but promises lose the context from
+    // dependent promises, which make it so we must save data that was
+    // easily saved in the function context which provides a very natural
+    // and easier way to save state between dependent callbacks.
+    //
 
 
+    // avatars is an array of avatar urls that are x3d files
+    // that we get below this function.  We need to get the avatar list
+    // before we can call this.
+    function addAvatar(avatars) {
 
-    // We tell the server that we want an Avatar file to represent us on
-    // the other clients
-    mw.createSource('Add Avatar',/*shortName*/
-        'user viewpoint avatar'/*description*/,
-        // 'addAvator' is association to the sink call to
-        // mw.recvPayload('addAvator', ...) above.
-        // This is the magic that connects sendPayload() to its
-        // corresponding recvPayload().
-        'addAvator'/* the recvPayload function name or url to javaScript
-                    * file receiver code (not url in this case) */,
-        function(avatarId, shortName) {
+        // We tell the server that we want an Avatar file to represent us on
+        // the other clients
+        mw.createSource('Add Avatar',/*shortName*/
+            'user viewpoint avatar'/*description*/,
+            // 'addAvator' is association to the sink call to
+            // mw.recvPayload('addAvator', ...) above.
+            // This is the magic that connects sendPayload() to its
+            // corresponding recvPayload().
+            'addAvator'/* the recvPayload function name or url to javaScript
+                            * file receiver code (not url in this case) */,
+            function(avatarId, shortName) {
 
-            // This is the avatar source function.
+                // This is the avatar source function.
 
-            // avatarId is the unique server service subscription Id that
-            // the server assigned to us.  shortName is assigned too, but
-            // based on our shortName that is requested in
-            // mw.createSource() just above.
+                // avatarId is the unique server service subscription Id that
+                // the server assigned to us.  shortName is assigned too, but
+                // based on our shortName that is requested in
+                // mw.createSource() just above.
 
-            // TODO: add user avatar selection.
-            // We could do it here based on avatarId.
-            // The arguments to this function get called with
-            // mw.addAvator() on the receiving client end.
-            mw.sendPayload(/*where to send =*/avatarId,
-                        /*what to send =*/avatarId,
-                        avatars[(parseInt(avatarId)%(avatars.length))]);
+                // TODO: add user avatar selection, so we can change this
+                // avatar x3d file that represents us.  We could do it
+                // here based on avatarId.  The arguments to this function
+                // get called with mw.addAvator() on the receiving client
+                // end.
+                mw.sendPayload(/*where to send =*/avatarId,
+                    /*what to send =*/avatarId,
+                    avatars[(parseInt(avatarId)%(avatars.length))]);
 
 
-            // We move "our" avatar on the other clients by sending our
-            // viewpoint. The positioning of the Avatar depends on the
-            // Avatar being loaded, therefore this is nested under the
-            // Avatar model loading callback.
- 
-            mw.createSource('Move Viewpoint Avator',/*shortName*/
-                'avator viewpoint position as 3 pos and 4 rot'/*description*/,
-                'moveViewpointAvator_' +
-                avatarId/*recvPayload() function name (or url of javaScript)*/,
-                function(avatarMoveId, shortName) {
+                // We move "our" avatar on the other clients by sending our
+                // viewpoint. The positioning of the Avatar depends on the
+                // Avatar being loaded, therefore this is nested under the
+                // Avatar model loading callback.
 
-                    // Wrapper utility function which sends the payload
-                    // called twice below.
-                    function sendPayload(pos, rot) {
-                        mw.sendPayload(/*where to send =*/avatarMoveId,
-                            /*what to send =*/pos, rot);
+                mw.createSource('Move Viewpoint Avator',/*shortName*/
+                    'avator viewpoint position as 3 pos and 4 rot'/*description*/,
+                    'moveViewpointAvator_' +
+                    avatarId/*recvPayload() function name (or url of javaScript)*/,
+                    function(avatarMoveId, shortName) {
+
+                        // Wrapper utility function which sends the payload
+                        // called twice below.
+                        function sendPayload(pos, rot) {
+                            mw.sendPayload(/*where to send =*/avatarMoveId,
+                                /*what to send =*/pos, rot);
+                            }
+
+                            // This is the "move avatar" source function.
+                            // We have approval from the server now we setup a
+                            // handler.
+
+                            // Send initial state the subscribers.
+                            // TODO: consider transforming to other
+                            // coordinates that are good in other
+                            // viewers and worlds.
+                            sendPayload(mw_getCurrentViewpoint().position,
+                                mw_getCurrentViewpoint().orientation);
+
+                            // Send this each time we change the viewpoint.
+                            // TODO: throttle this.  It may be writing too much.
+                            mw_getCurrentViewpoint().addEventListener(
+                                'viewpointChanged',
+                                function(e) {
+                                    // send to server and in turn it's
+                                    // sent to other clients as our
+                                    // avatar's current 6D position.
+                                    sendPayload(e.position, e.orientation);
+                                }
+                            );
                     }
+                );
+            }
+        );
+    }
 
-                    // This is the "move avatar" source function.
-                    // We have approval from the server now we setup a
-                    // handler.
-
-                    // Send initial state the subscribers.
-                    sendPayload(mw_getCurrentViewpoint().position,
-                            mw_getCurrentViewpoint().orientation);
-
-                    // Send this each time we change the viewpoint.
-                    // TODO: throttle this.  It may be writing too much.
-                    mw_getCurrentViewpoint().addEventListener(
-                            'viewpointChanged',
-                        function(e) {
-
-                            sendPayload(e.position, e.orientation);
-                        }
-                    );
-                }
-            );
-        }
-    );
-
-
-    }); // mw.glob('/mw/avatars/*.x3d',...)
-    
-    }); // mw_addActor(prefix + '../mw_popupDialog.css'
-
-
-    // TODO: We need to use javaScript Promise
+    // addAvatars is called by mw.getAvatars() after getting the avatars
+    // array from the server.
+    mw.getAvatars(addAvatar);
 
 })();
+

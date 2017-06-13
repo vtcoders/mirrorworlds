@@ -3,7 +3,7 @@
 // file that is loaded by the browser client.
 
 
-// one stinking global
+// one stinking global object
 var _mw = {
 
     connectionCount: 0, // number of times we make a webSocket connection
@@ -15,9 +15,12 @@ var _mw = {
 function mw_fail() {
 
     // TODO: add stack trace or is browser debugger enough?
-    var text = "Something has gone wrong";
+    var text = "Something has gone wrong:\n";
     for(var i=0; i < arguments.length; ++i)
         text += "\n" + arguments[i];
+    line = '\n--------------------------------------------------------';
+    text += line + '\nCALL STACK' + line + '\n' +
+        new Error().stack + line;
     console.log(text);
     alert(text);
     window.stop();
@@ -46,7 +49,7 @@ function mw_addPopupDialog(widget, button, func = null,
     // stop keying <enter> from clicking the button
     // by removing the onclick callback
     button.onclick = null;
-    
+
     widget.className = 'widget_box';
 
     var bottom = document.createElement('div');
@@ -54,29 +57,28 @@ function mw_addPopupDialog(widget, button, func = null,
 
     var b = document.createElement('button');
     b.appendChild(document.createTextNode('cancel'));
-    b.onclick = function() {
-    };
+    b.onclick = function() {};
     b.className = 'widget_button';
     bottom.appendChild(b);
 
     if(ok) {
         b = document.createElement('button');
         b.appendChild(document.createTextNode(' ok '));
-        b.onclick = function() {
-        };
+        b.onclick = function() {};
         b.className = 'widget_button';
         bottom.appendChild(b);
     }
 
     widget.appendChild(bottom);
-    
+
     // Start by showing the Popup Dialog.
     widget.style.visibility = 'visible';
     var background = document.createElement('div');
     background.className = 'background_dimmer';
     document.body.appendChild(background);
+
     background.onclick = function() {
-    
+
         document.body.removeChild(background);
         widget.style.visibility = 'hidden';
         widget.removeChild(bottom);
@@ -86,9 +88,9 @@ function mw_addPopupDialog(widget, button, func = null,
 
             // restart Popup Dialog
             mw_addPopupDialog(widget, button);
-        }
+        };
         return false;
-    }
+    };
     console.log('MW added popup widget:\n   ' +
             widget.innerHTML);
 }
@@ -109,7 +111,7 @@ function _mw_findNodes(node, param,
         returnFunc = function(node, param) {
             return node.getAttribute(param);
         },
-        testFunc = function(node, param) { 
+        testFunc = function(node, param) {
             return node.hasAttribute && node.hasAttribute(param);
         }) {
 
@@ -143,12 +145,12 @@ function _mw_findAttributes(node, attribute) {
 function _mw_runFunctions(actorCalls)
 {
     actorCalls.forEach(
-        function(call) {
-            console.log('MW Calling: ' + call.call + '(' +
-                    call.node + ')');
-            window[call.call](call.node);
-        }
-    );
+            function(call) {
+                console.log('MW Calling: ' + call.call + '(' +
+                        call.node + ')');
+                window[call.call](call.node);
+            }
+            );
 }
 
 
@@ -160,6 +162,9 @@ function mw_getCurrentViewpoint()
     mw_assert(x3d && x3d.length > 0, 'first x3d tag not found');
     x3d = x3d[0];
     mw_assert(x3d, 'first x3d tag not found');
+    // TODO: I've seen this assertion fail, so it looks like there is
+    // a race condition in x3dom.js
+    mw_assert(x3d.runtime, "x3d.runtime does not exist");
     // This call suggests that there is just one active viewpoint at any time
     // for a given x3d tag.  So there must be more x3d tags if you need
     // more views.
@@ -170,12 +175,12 @@ function mw_getCurrentViewpoint()
     // not if(viewpoint === undefined) WTF?
     if(viewpoint == undefined) {
 
-	viewpoint = document.createElement("viewpoint");
-	var scene = x3d.getElementsByTagName("Scene");
+        viewpoint = document.createElement("viewpoint");
+        var scene = x3d.getElementsByTagName("Scene");
 
-	mw_getScene().appendChild(viewpoint);
+        mw_getScene().appendChild(viewpoint);
         //viewpoint.setAttribute("position", "2 1.5 5");
-	//viewpoint.setAttribute("orientation", "0 0 0 0");
+        //viewpoint.setAttribute("orientation", "0 0 0 0");
     }
     _mw.viewpoint = viewpoint;
     return viewpoint;
@@ -207,7 +212,7 @@ function _mw_addCss(href, onload) {
     link.setAttribute("rel", "stylesheet");
     link.setAttribute("type", "text/css");
     link.setAttribute("href", href)
-    link.onload = onload;
+        link.onload = onload;
     link.onerror = function() {
         mw_fail(href + ' failed to load');
     };
@@ -218,7 +223,7 @@ function _mw_addCss(href, onload) {
 function _mw_addScripts(actorScriptUrls, actorCalls, opts) {
 
     if(actorCalls && actorCalls.length > 0) {
-        
+
         var count = actorScriptUrls.length;
         var check = function() {
             --count;
@@ -260,7 +265,8 @@ function _mw_addX3d(url, onload = null,
 
     if(opts === null)
         var opts = { containerNodeType: 'group' };
-    if(opts.containerNodeType === undefined || opts.containerNodeType === null)
+    if(opts.containerNodeType === undefined ||
+            opts.containerNodeType === null)
         opts.containerNodeType = 'group';
 
     if(opts.parentNode ===  undefined || opts.parentNode === null)
@@ -296,7 +302,7 @@ function _mw_addX3d(url, onload = null,
                     else
                         return src;
                 }
-        );
+                );
         var actorCalls = _mw_findNodes(this, 'data-mw_call',
                 function(node, attribute) {
                     return {
@@ -304,7 +310,7 @@ function _mw_addX3d(url, onload = null,
                         call: node.getAttribute(attribute)
                     };
                 }
-        );
+                );
 
         // if the xd3 file had data-mw_script and/or data-mw_call
         // attributes we load the scripts and run the "mw_call" functions.
@@ -326,7 +332,7 @@ function _mw_addX3d(url, onload = null,
 
 function _mw_addActor(url, onload = null, opts = null) {
 
-    var suffix = url.replace(/^.*\./g, '').toLowerCase(); 
+    var suffix = url.replace(/^.*\./g, '').toLowerCase();
 
     switch (suffix) {
         case 'x3d':
@@ -349,14 +355,14 @@ function mw_getScene() {
     if(_mw.scene === undefined) {
         var scenes = _mw_findNodes(
                 document.getElementsByTagName("BODY")[0], 'SCENE',
-            function (node, nodeName) {
-                return node; // what to return in an array
-            },
-            function (node, nodeName) {
-                // The test function
-                return node.nodeName === nodeName;
-            }
-        );
+                function (node, nodeName) {
+                    return node; // what to return in an array
+                },
+                function (node, nodeName) {
+                    // The test function
+                    return node.nodeName === nodeName;
+                }
+                );
         mw_assert(scenes.length === 1, 'scenes=' + scenes);
         _mw.scene = scenes[0];
     }
@@ -409,7 +415,7 @@ function _mw_currentScriptAddress() {
     mw_assert(document.currentScript,
             'you cannot get the current script in a handler');
     return document.currentScript.
-                src.replace(/^.*:\/\//, '').replace(/\/.*$/, '');
+        src.replace(/^.*:\/\//, '').replace(/\/.*$/, '');
 }
 
 
@@ -437,7 +443,7 @@ function mw_getScriptOptions() {
     else
         var opts = {};
 
-    
+
     if(opts.script === undefined) {
         opts.script = document.currentScript;
     }
@@ -466,14 +472,15 @@ function mw_getScriptOptions() {
 //
 // userInit(mw) called in connect callback.
 // TODO: This makes an object that is not exposed outside this
-// function scope.  Do we need to make this a client constructor function?
+// function scope.  Do we need to make this a client constructor
+// function?
 //
 // opts { url: 'url' }
-function mw_client(userInit = function(mw) {
+function mw_client(
+        userInit = function(mw) {
             console.log('MW called default userInit('+mw+')');
-        },
-        opts = {}) {
-   
+                    }, opts = {})
+{
     // We handle protocols: http: https: ws: wss:
     // The http(s) protocols are converted to ws: or wss:
 
@@ -490,7 +497,7 @@ function mw_client(userInit = function(mw) {
         // keep trying until _mw.client_userInitFunc is not set
         if(typeof(_mw.client_userInitFunc) === 'function') {
 
-                        console.log('MW waiting to connect to: ' + opts.url);
+            console.log('MW waiting to connect to: ' + opts.url);
             // Try again later.
             setTimeout(function() {
                 // Interesting, this is recursion without adding to the
@@ -538,7 +545,8 @@ function mw_client(userInit = function(mw) {
     mw.subscriptions = {};
     mw.sendCount = 0; // a counter to label individual requests.
     mw.globFuncs = { };
-
+    mw.globRequestId = 0;
+    
     mw.on = function(name, func) {
 
         mw.onCalls[name] = func;
@@ -551,7 +559,7 @@ function mw_client(userInit = function(mw) {
         mw.send(JSON.stringify({ name: name, args: args }));
     };
 
-    // Sends through the server to clients 
+    // Sends through the server to clients
     mw.sendPayload = function() {
 
         var args = [].slice.call(arguments);
@@ -570,10 +578,10 @@ function mw_client(userInit = function(mw) {
         // TODO: A simple policy for now, needs to be expanded.
 
         if(mw.Sources[sourceId] !== undefined ||
-            // We are the source of this subscription.
-            mw.subscribeAll === false
-            // dumb policy flag.  TODO more code here
-            )
+                // We are the source of this subscription.
+                mw.subscribeAll === false
+                // dumb policy flag.  TODO more code here
+          )
             return false; // do not subscribe
 
         return true; // subscribe
@@ -586,12 +594,12 @@ function mw_client(userInit = function(mw) {
         // tag is the server source ID (like '21').
 
         if(mw.subscriptions[sourceId] === undefined
-            // We did not get the 'newSubscription' yet.
-            || !mw._checkSubscriptionPolicy(sourceId)
-            // Policy rejects this subscription.
-            || mw.recvCalls[sourceId] !== undefined
-            // We are subscribed already
-                ) {
+                // We did not get the 'newSubscription' yet.
+                || !mw._checkSubscriptionPolicy(sourceId)
+                // Policy rejects this subscription.
+                || mw.recvCalls[sourceId] !== undefined
+                // We are subscribed already
+          ) {
             // Subscription Debug spew
             mw.printSubscriptions();
             return;
@@ -606,14 +614,14 @@ function mw_client(userInit = function(mw) {
             // server subscription ID.
             mw.recvCalls[sourceId] =
                 mw.recvCalls[
-                    mw.subscriptions[sourceId].tagOrJavaScriptSrc
+                mw.subscriptions[sourceId].tagOrJavaScriptSrc
                 ];
             var cleanupCall = mw.cleanupCalls[
-                    mw.subscriptions[sourceId].tagOrJavaScriptSrc
-                ];
+                mw.subscriptions[sourceId].tagOrJavaScriptSrc
+            ];
             if(cleanupCall !== undefined)
                 mw.cleanupCalls[sourceId] = cleanupCall;
-            
+
             // Tell the server to send this subscription to us.
             mw._emit('subscribe', sourceId);
 
@@ -624,16 +632,16 @@ function mw_client(userInit = function(mw) {
         // else We have javaScript to that will mw.recvPayload()
 
         mw_addActor(mw.subscriptions[sourceId].tagOrJavaScriptSrc,
-            function() {
-                console.log('MW subscribed to ' +
-                mw.subscriptions[sourceId].tagOrJavaScriptSrc);
+                function() {
+                    console.log('MW subscribed to ' +
+                            mw.subscriptions[sourceId].tagOrJavaScriptSrc);
 
-                // Tell the server to send this subscription to us.
-                mw._emit('subscribe', sourceId);
+                    // Tell the server to send this subscription to us.
+                    mw._emit('subscribe', sourceId);
 
-                mw.printSubscriptions();
-            },  mw.subscriptions[sourceId]/*mw_addActor() options*/
-        );
+                    mw.printSubscriptions();
+                },  mw.subscriptions[sourceId]/*mw_addActor() options*/
+                );
     };
 
 
@@ -648,43 +656,44 @@ function mw_client(userInit = function(mw) {
 
         mw_assert(mw.recvCalls[tag] === undefined &&
                 mw.cleanupCalls[tag] === undefined,
-            'mw.recvPayload(tag="'+ tag +
-            '") called with tag that was used before:\n   ' +
-            '   mw.recvPayload(' + tag + ',' +
-            '   ' + recvFunc + ',' +
-            '\n   ' + cleanupFunc + ')');
+                'mw.recvPayload(tag="'+ tag +
+                    '") called with tag that was used before:\n   ' +
+                '   mw.recvPayload(' + tag + ',' +
+                    '   ' + recvFunc + ',' +
+                    '\n   ' + cleanupFunc + ')');
 
-        // Log the callbacks.
-        mw.recvCalls[tag] = recvFunc;
-        if(cleanupFunc !== null)
-            mw.cleanupCalls[tag] = cleanupFunc;
+                // Log the callbacks.
+                mw.recvCalls[tag] = recvFunc;
+                if(cleanupFunc !== null)
+                mw.cleanupCalls[tag] = cleanupFunc;
 
-        // Subscribe if things are setup for it.
-        if(mw.subscriptions[tag] !== undefined) {
-            // This tag is a sourceId
-            mw._checkSubscribe(tag);
-            return;
-        } else
-            mw_assert(isNaN(parseInt(tag, 10)),
+                // Subscribe if things are setup for it.
+                if(mw.subscriptions[tag] !== undefined) {
+                    // This tag is a sourceId
+                    mw._checkSubscribe(tag);
+                    return;
+                } else
+                mw_assert(isNaN(parseInt(tag, 10)),
                     'mw.recvPayload("' + tag +
-                    '") bad subsciption descriptor "' +
-                    tag + '"');
+                        '") bad subsciption descriptor "' +
+                        tag + '"');
 
-        // This tag is a descriptor string.  See if we have
-        // a subscription that matches already.
+                    // This tag is a descriptor string.  See if we have
+                    // a subscription that matches already.
 
-        // TODO: this is a linear search OMG:
-        Object.keys(mw.subscriptions).forEach(function(sourceId) {
+                    // TODO: this is a linear search OMG:
+                    Object.keys(mw.subscriptions).forEach(function(sourceId) {
 
-            if(mw.subscriptions[sourceId].tagOrJavaScriptSrc === tag) {
-                mw._checkSubscribe(sourceId);
-                return;
-            }
-        });
-    };
+                        if(mw.subscriptions[sourceId].
+                                tagOrJavaScriptSrc === tag) {
+                            mw._checkSubscribe(sourceId);
+                            return;
+                        }
+                    });
+                    };
 
-    // Sets the mw.cleanupCalls function after the mw.recvCalls function is
-    // called.
+                    // Sets the mw.cleanupCalls function after the mw.recvCalls function is
+                    // called.
     mw.setUnsubscribeCleanup = function(sourceId, removeFunc) {
 
         mw.cleanupCalls[sourceId] = removeFunc;
@@ -701,17 +710,18 @@ function mw_client(userInit = function(mw) {
         if(message.substr(0, 1) === 'P') {
 
             // The message should be of the form: 'P343=' + jsonString
-            // where 343 is an example source ID.  An example of a mininum
+            // where 343 is an example source ID.  An example of a
+            // mininum
             // message would be like 'P2={}'
             var idLen = 1;
             var stop = message.length - 3;
             // find a '=' so the ID is before it.
             while(idLen < stop && message.substr(idLen+1, 1) !== '=')
                 ++idLen;
-            
+
             if(idLen === stop) {
                 console.log('MW Bad WebSocket "on" message from ' +
-                    mw.url + '\n  ' + e.data);
+                        mw.url + '\n  ' + e.data);
                 return;
             }
 
@@ -721,11 +731,11 @@ function mw_client(userInit = function(mw) {
 
             if(mw.recvCalls[sourceId] === undefined)
                 mw_fail('MW WebSocket on payload sink callback "' + name +
-                    '" not found for message from ' + mw.url + '=' +
-                    '\n  ' + e.data);
+                        '" not found for message from ' + mw.url + '=' +
+                        '\n  ' + e.data);
 
-            // There is an option to not have a callback to receive the
-            // payload with mw.recvCalls === null.
+            // There is an option to not have a callback to receive
+            // the payload with mw.recvCalls === null.
             if(mw.recvCalls !== null)
                 (mw.recvCalls[sourceId])(...obj.args);
 
@@ -788,8 +798,8 @@ function mw_client(userInit = function(mw) {
 
     mw.createSource = function(shortName, description,
             tagOrJavaScriptSrc, func, cleanupFunc = null) {
-
-        var clientSourceId = (++mw.SourceCount).toString(); // client source ID
+        // client source ID
+        var clientSourceId = (++mw.SourceCount).toString();
         mw.CreateSourceFuncs[clientSourceId] = func;
         // TODO: make this cleanupFunc do it's thing on a
         // 'removeSource' server request ???
@@ -801,70 +811,138 @@ function mw_client(userInit = function(mw) {
     };
 
 
-    mw.on('glob', function(sendId, err, files) {
 
-        mw_assert(mw.globFuncs[sendId] !== undefined,
-                'bad glob received id=' + sendId);
-        mw.globFuncs[sendId](err, files);
-        delete mw.globFuncs[sendId];
+    mw.on('glob', function(globRequestId, err, files) {
+
+        mw_assert(typeof(mw.globFuncs[globRequestId]) === 'function',
+                'bad glob received id=' + globRequestId);
+        mw.globFuncs[globRequestId](err, files);
+        delete mw.globFuncs[globRequestId];
     });
 
 
     mw.glob = function(expression, func) {
-        mw._emit('glob', expression, (++mw.sendId).toString());
-        mw.globFuncs[mw.sendId.toString()] = func;
+        mw._emit('glob', expression, mw.globRequestId.toString());
+        mw.globFuncs[((mw.globRequestId)++).toString()] = func;
+    };
+
+
+    // callbackFunc(avatars) is a function that gets the argument
+    // avatars that is an array of avators that are like for example:
+    // [ "/mw/avatars/teapot_red.x3d", "/mw/avatars/teapot_blue.x3d"
+    // ... ]
+    mw.getAvatars = function(callbackFunc) {
+
+        mw_addActor(_mw_getCurrentScriptPrefix() +
+            '../mw_popupDialog.css', function() {
+
+            // We ask the server for a list of avatar files and
+            // it returns it in the avatars array in the function
+            // callback.
+            mw.glob('/mw/avatars/*.x3d', function(er, avatars) {
+
+                console.log('glob er=' + er + ' glob avatars=' + avatars);
+                if(er) {
+                    console.log('MW failed to get avatar list:\n   ' + er);
+                    return;
+                }
+
+                var button = document.getElementById('select_avatar');
+                if(!button) {
+                    button = document.createElement('A');
+                    button.href = '#';
+                    button.appendChild(document.createTextNode('Select Avatar'));
+                    // TODO: could be prettier.
+                    document.body.appendChild(button);
+                    button.title = 'change avatar';
+                }
+
+                button.onclick = function(e) {
+
+                    var div = document.createElement('div');
+                    var innerHTML =
+                        '<h2>Select an Avatar</h2>\n' +
+                        '<select>\n';
+
+                    var i;
+
+                    for(i=0;i<avatars.length;++i) {
+                        innerHTML +=
+                            '<option value="' + avatars[i] + '"';
+                        if(i === mw.Id%(avatars.length))
+                            innerHTML += ' selected="selected"';
+                        innerHTML += '>' +
+                            avatars[i].replace(/^.*\/|/g,'').
+                            replace(/\.x3d$/, '').replace(/_/g, ' '); +
+                            '</option>\n';
+                    }
+
+                    innerHTML +='  </select>\n';
+
+                    div.innerHTML = innerHTML;
+
+                    mw_addPopupDialog(div, button);
+                };
+
+                // Call the users callback with the array of avatars.
+                callbackFunc(avatars);
+
+            }); // mw.glob('/mw/avatars/*.x3d',...)
+
+        }); // mw_addActor(prefix + '../mw_popupDialog.css'
+
     };
 
 
     mw.on('createSource', /*received from the server*/
-        function(clientSourceId, serverSourceId, shortName) {
+            function(clientSourceId, serverSourceId, shortName) {
 
-            var func = mw.CreateSourceFuncs[clientSourceId];
-            // The shortName will be modified by the server and returned
-            // in this callback to the javaScript that called
-            // mw.createSource().
-            func(serverSourceId, shortName);
-            // We are done with this function.
-            delete mw.CreateSourceFuncs[clientSourceId];
+                var func = mw.CreateSourceFuncs[clientSourceId];
+                // The shortName will be modified by the server and
+                // returned in this callback to the javaScript that
+                // called mw.createSource().
+                func(serverSourceId, shortName);
+                // We are done with this function.
+                delete mw.CreateSourceFuncs[clientSourceId];
 
-            // TODO: this in a 'removeSource'
-            // server request or something like that.
+                // TODO: this in a 'removeSource'
+                // server request or something like that.
 
-            // Record that we are a source: If mw.Sources[serverSourceId]
-            // is defined we are a source to the serverSourceId
-            // subscription and while we are at it use the cleanup
-            // function as the value.
-            mw.Sources[serverSourceId] = mw.CleanupSourceFuncs[clientSourceId];
+                // Record that we are a source: If mw.Sources[serverSourceId]
+                // is defined we are a source to the serverSourceId
+                // subscription and while we are at it use the cleanup
+                // function as the value.
+                mw.Sources[serverSourceId] = mw.CleanupSourceFuncs[clientSourceId];
 
-            // Now that we have things setup for this source we tell the
-            // server to advertise the 'newSubscription'.  The server
-            // can't send out the 'newSubscription' advertisement until we
-            // tell it to, so that we have no race condition:  If we got
-            // the 'newSubscription' before we received the sourceId we
-            // could not tell if we are the client that is the source for
-            // receiving the corresponding 'newSubscription' below... 
-            mw._emit('advertise', serverSourceId);
+                // Now that we have things setup for this source we tell the
+                // server to advertise the 'newSubscription'.  The server
+                // can't send out the 'newSubscription' advertisement until we
+                // tell it to, so that we have no race condition:  If we got
+                // the 'newSubscription' before we received the sourceId we
+                // could not tell if we are the client that is the source for
+                // receiving the corresponding 'newSubscription' below...
+                mw._emit('advertise', serverSourceId);
 
-            // TODO: add a client initiated removeSource interface
-        }
+                // TODO: add a client initiated removeSource interface
+            }
     );
 
     // For Client code initiated unsubscribe.  The server sends
     // 'removeSubscription' events for when subscription become unavailable.
     mw.unsubscribe = function(sourceId) {
- 
+
         // TODO: More code here.
         console.log('MW unsubscribing to ' +
-                    mw.subscriptions[sourceId].shortName);
+                mw.subscriptions[sourceId].shortName);
 
         // TODO: remove the <script> if there is one.
 
         if(mw.cleanupCalls[sourceId] !== undefined) {
             console.log('MW calling cleanupCall(sourceId=' +
-                    sourceId + ')');
-            // The user is not required to define a cleanup function.
-            // Look how easy it is to pass the arguments.
-            mw.cleanupCalls[sourceId].apply(mw, arguments);
+                        sourceId + ')');
+                    // The user is not required to define a cleanup function.
+                    // Look how easy it is to pass the arguments.
+                    mw.cleanupCalls[sourceId].apply(mw, arguments);
         }
 
         delete mw.recvCalls[sourceId];
@@ -910,12 +988,12 @@ function mw_client(userInit = function(mw) {
             // we are subscribed.
             console.log('   "' + mw.subscriptions[id].shortName +
                     '" (' + mw._subscribeType(id) + ')');
-        });
+                    });
 
-        if(notGotOne)
+            if(notGotOne)
             console.log('Mw server ' + mw.url +
-                    ' Has NO current subscriptions available');
-     };
+                ' Has NO current subscriptions available');
+    };
 
 
     // 'newSubscription' Sent to this client when a source becomes
@@ -932,7 +1010,7 @@ function mw_client(userInit = function(mw) {
             // Add this to the list of things that we can subscribe to
             // whither we subscribe to it or not.
             mw.subscriptions[sourceId] = {
- 
+
                 mw: mw,
                 sourceId: sourceId, // server source ID
                 shortName: shortName,
@@ -952,11 +1030,10 @@ function mw_client(userInit = function(mw) {
     });
 
 
-    mw.removeSource(sourceId, func = null) {
+    mw.removeSource = function(sourceId, func = null) {
 
         mw_emit('removeSubscription', sourceId);
-    }
-
+    };
 
 
     return mw;
@@ -966,7 +1043,7 @@ function mw_client(userInit = function(mw) {
 // WebRTC
 // https://www.html5rocks.com/en/tutorials/webrtc/basics/
 // https://www.w3.org/TR/webrtc/
-function _mw_init() {
+function mw_init() {
 
     var url = null;
 
@@ -987,21 +1064,6 @@ function _mw_init() {
         mw_addActor(url,
                 function() {mw._emit('initiate');}
                 , { mw: mw }
-        );
+                );
     });
-}
-
-
-// Called from body onload event.
-function mw_init() {
-
-    mw_addActor(
-        [   'x3dom/x3dom.css',
-            'x3dom/x3dom.js',
-            'mw_default.css'
-        ],
-        // So _mw_init() is called after all these
-        // files are loaded.
-        function(node) { _mw_init(); }
-    );
 }
