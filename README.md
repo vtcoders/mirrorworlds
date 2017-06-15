@@ -75,3 +75,17 @@ always be give and take.  ref: https://gist.github.com/branneman/8048520
 
 ### Profiling
 - https://nodejs.org/en/docs/guides/simple-profiling/
+
+### Client API
+
+
+- *mw* A singlton object
+
+- *mw.createSource(shortName, description, receiver, onCallback)*
+    create a subscription and make this client a source (writer)
+    to that subscription
+
+- *mw.getSource(shortName, description, receiver, onCallback)*
+    create a subscription if it does not exist and make this client
+    a source (writer) to that subscription
+

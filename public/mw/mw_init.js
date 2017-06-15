@@ -39,12 +39,16 @@ function mw_assert(val, msg) {
 }
 
 
-// This starts the popup with widget showing.
-function mw_addPopupDialog(widget, button, func = null,
-        ok = null) {
+// This starts the popup with widget showing
+// and has buttons that hide it.
+function mw_addPopupDialog(widget, button, func = null) {
 
     if(button.onclick)
         document.body.appendChild(widget);
+
+    var background = document.createElement('div');
+    background.className = 'background_dimmer';
+    document.body.appendChild(background);
 
     // stop keying <enter> from clicking the button
     // by removing the onclick callback
@@ -55,30 +59,7 @@ function mw_addPopupDialog(widget, button, func = null,
     var bottom = document.createElement('div');
     bottom.className = 'widget_bottom';
 
-    var b = document.createElement('button');
-    b.appendChild(document.createTextNode('cancel'));
-    b.onclick = function() {};
-    b.className = 'widget_button';
-    bottom.appendChild(b);
-
-    if(ok) {
-        b = document.createElement('button');
-        b.appendChild(document.createTextNode(' ok '));
-        b.onclick = function() {};
-        b.className = 'widget_button';
-        bottom.appendChild(b);
-    }
-
-    widget.appendChild(bottom);
-
-    // Start by showing the Popup Dialog.
-    widget.style.visibility = 'visible';
-    var background = document.createElement('div');
-    background.className = 'background_dimmer';
-    document.body.appendChild(background);
-
-    background.onclick = function() {
-
+    function hide() {
         document.body.removeChild(background);
         widget.style.visibility = 'hidden';
         widget.removeChild(bottom);
@@ -87,11 +68,35 @@ function mw_addPopupDialog(widget, button, func = null,
         button.onclick = function() {
 
             // restart Popup Dialog
-            mw_addPopupDialog(widget, button);
+            mw_addPopupDialog(widget, button, func);
         };
         return false;
+    }
+
+
+    var b = document.createElement('button');
+    b.appendChild(document.createTextNode('cancel'));
+    b.onclick = hide;
+    b.className = 'widget_button';
+    bottom.appendChild(b);
+
+    b = document.createElement('button');
+    b.appendChild(document.createTextNode(' ok '));
+    b.onclick = function() {
+        hide();
+        if(func) func();
     };
-    console.log('MW added popup widget:\n   ' +
+    b.className = 'widget_button';
+    bottom.appendChild(b);
+
+    widget.appendChild(bottom);
+
+    // Start by showing the Popup Dialog.
+    widget.style.visibility = 'visible';
+
+    background.onclick = hide;
+
+    console.log('MW showing popup widget:\n   ' +
             widget.innerHTML);
 }
 
@@ -573,7 +578,7 @@ function mw_client(
 
     // Do we subcribe? Return true or false
     // TODO: move policy stuff.
-    mw._checkSubscriptionPolicy = function(sourceId) {
+    function _checkSubscriptionPolicy(sourceId) {
 
         // TODO: A simple policy for now, needs to be expanded.
 
@@ -585,17 +590,17 @@ function mw_client(
             return false; // do not subscribe
 
         return true; // subscribe
-    };
+    }
 
 
     // Subscribe if we can and should.
-    mw._checkSubscribe = function(sourceId) {
+    function _checkSubscribe(sourceId) {
 
         // tag is the server source ID (like '21').
 
         if(mw.subscriptions[sourceId] === undefined
                 // We did not get the 'newSubscription' yet.
-                || !mw._checkSubscriptionPolicy(sourceId)
+                || !_checkSubscriptionPolicy(sourceId)
                 // Policy rejects this subscription.
                 || mw.recvCalls[sourceId] !== undefined
                 // We are subscribed already
@@ -632,17 +637,17 @@ function mw_client(
         // else We have javaScript to that will mw.recvPayload()
 
         mw_addActor(mw.subscriptions[sourceId].tagOrJavaScriptSrc,
-                function() {
-                    console.log('MW subscribed to ' +
-                            mw.subscriptions[sourceId].tagOrJavaScriptSrc);
+            function() {
+                console.log('MW subscribed to ' +
+                    mw.subscriptions[sourceId].tagOrJavaScriptSrc);
 
-                    // Tell the server to send this subscription to us.
-                    mw._emit('subscribe', sourceId);
+                // Tell the server to send this subscription to us.
+                mw._emit('subscribe', sourceId);
 
-                    mw.printSubscriptions();
-                },  mw.subscriptions[sourceId]/*mw_addActor() options*/
-                );
-    };
+                mw.printSubscriptions();
+            },  mw.subscriptions[sourceId]/*mw_addActor() options*/
+        );
+    }
 
 
     // This may get called with a tag (like '21'), an ID from the server
@@ -651,49 +656,49 @@ function mw_client(
     // callbacks are used with any subscriptions ('newSubscription') that
     // come in with a tagOrJavaScriptSrc value that is the same as the
     // descriptor (tag) string.
-    mw.recvPayload = function(tag, recvFunc = null,
-            cleanupFunc = null) {
+    mw.recvPayload = function(tag, recvFunc = null, cleanupFunc = null) {
 
         mw_assert(mw.recvCalls[tag] === undefined &&
-                mw.cleanupCalls[tag] === undefined,
-                'mw.recvPayload(tag="'+ tag +
-                    '") called with tag that was used before:\n   ' +
-                '   mw.recvPayload(' + tag + ',' +
-                    '   ' + recvFunc + ',' +
-                    '\n   ' + cleanupFunc + ')');
+            mw.cleanupCalls[tag] === undefined,
+            'mw.recvPayload(tag="'+ tag +
+            '") called with tag that was used before:\n   ' +
+            '   mw.recvPayload(' + tag + ',' +
+            '   ' + recvFunc + ',' +
+            '\n   ' + cleanupFunc + ')');
 
-                // Log the callbacks.
-                mw.recvCalls[tag] = recvFunc;
-                if(cleanupFunc !== null)
-                mw.cleanupCalls[tag] = cleanupFunc;
+        // Log the callbacks.
+        mw.recvCalls[tag] = recvFunc;
+        if(cleanupFunc !== null)
+            mw.cleanupCalls[tag] = cleanupFunc;
 
-                // Subscribe if things are setup for it.
-                if(mw.subscriptions[tag] !== undefined) {
-                    // This tag is a sourceId
-                    mw._checkSubscribe(tag);
-                    return;
-                } else
-                mw_assert(isNaN(parseInt(tag, 10)),
-                    'mw.recvPayload("' + tag +
-                        '") bad subsciption descriptor "' +
-                        tag + '"');
+        // Subscribe if things are setup for it.
+        if(mw.subscriptions[tag] !== undefined) {
+            // This tag is a sourceId
+            _checkSubscribe(tag);
+            return;
+        } else
+            mw_assert(isNaN(parseInt(tag, 10)),
+                'mw.recvPayload("' + tag +
+                '") bad subsciption descriptor "' +
+                tag + '"');
 
-                    // This tag is a descriptor string.  See if we have
-                    // a subscription that matches already.
+        // This tag is a descriptor string.  See if we have
+        // a subscription that matches already.
 
-                    // TODO: this is a linear search OMG:
-                    Object.keys(mw.subscriptions).forEach(function(sourceId) {
+        // TODO: this is a linear search OMG:
+        Object.keys(mw.subscriptions).forEach(function(sourceId) {
 
-                        if(mw.subscriptions[sourceId].
-                                tagOrJavaScriptSrc === tag) {
-                            mw._checkSubscribe(sourceId);
-                            return;
-                        }
-                    });
-                    };
+            if(mw.subscriptions[sourceId].
+                tagOrJavaScriptSrc === tag) {
+                _checkSubscribe(sourceId);
+                return;
+            }
+        });
+    };
 
-                    // Sets the mw.cleanupCalls function after the mw.recvCalls function is
-                    // called.
+
+    // Sets the mw.cleanupCalls function after the mw.recvCalls function is
+    // called.
     mw.setUnsubscribeCleanup = function(sourceId, removeFunc) {
 
         mw.cleanupCalls[sourceId] = removeFunc;
@@ -811,7 +816,6 @@ function mw_client(
     };
 
 
-
     mw.on('glob', function(globRequestId, err, files) {
 
         mw_assert(typeof(mw.globFuncs[globRequestId]) === 'function',
@@ -847,6 +851,9 @@ function mw_client(
                     return;
                 }
 
+                // Which avatar do we select from the array of avatars.
+                var avatarIndex = mw.Id%(avatars.length);
+
                 var button = document.getElementById('select_avatar');
                 if(!button) {
                     button = document.createElement('A');
@@ -869,7 +876,7 @@ function mw_client(
                     for(i=0;i<avatars.length;++i) {
                         innerHTML +=
                             '<option value="' + avatars[i] + '"';
-                        if(i === mw.Id%(avatars.length))
+                        if(i === avatarIndex)
                             innerHTML += ' selected="selected"';
                         innerHTML += '>' +
                             avatars[i].replace(/^.*\/|/g,'').
@@ -885,7 +892,7 @@ function mw_client(
                 };
 
                 // Call the users callback with the array of avatars.
-                callbackFunc(avatars);
+                callbackFunc(avatars, avatarIndex);
 
             }); // mw.glob('/mw/avatars/*.x3d',...)
 
@@ -895,40 +902,37 @@ function mw_client(
 
 
     mw.on('createSource', /*received from the server*/
-            function(clientSourceId, serverSourceId, shortName) {
+        function(clientSourceId, serverSourceId, shortName) {
 
-                var func = mw.CreateSourceFuncs[clientSourceId];
-                // The shortName will be modified by the server and
-                // returned in this callback to the javaScript that
-                // called mw.createSource().
-                func(serverSourceId, shortName);
-                // We are done with this function.
-                delete mw.CreateSourceFuncs[clientSourceId];
+            var func = mw.CreateSourceFuncs[clientSourceId];
+            // The shortName will be modified by the server and
+            // returned in this callback to the javaScript that
+            // called mw.createSource().
+            func(serverSourceId, shortName);
+            // We are done with this function.
+            delete mw.CreateSourceFuncs[clientSourceId];
 
-                // TODO: this in a 'removeSource'
-                // server request or something like that.
+            // Record that we are a source: If mw.Sources[serverSourceId]
+            // is defined we are a source to the serverSourceId
+            // subscription and while we are at it use the cleanup
+            // function as the value.
+            mw.Sources[serverSourceId] = mw.CleanupSourceFuncs[clientSourceId];
 
-                // Record that we are a source: If mw.Sources[serverSourceId]
-                // is defined we are a source to the serverSourceId
-                // subscription and while we are at it use the cleanup
-                // function as the value.
-                mw.Sources[serverSourceId] = mw.CleanupSourceFuncs[clientSourceId];
+            // Now that we have things setup for this source we tell the
+            // server to advertise the 'newSubscription'.  The server
+            // can't send out the 'newSubscription' advertisement until we
+            // tell it to, so that we have no race condition:  If we got
+            // the 'newSubscription' before we received the sourceId we
+            // could not tell if we are the client that is the source for
+            // receiving the corresponding 'newSubscription' below...
+            mw._emit('advertise', serverSourceId);
 
-                // Now that we have things setup for this source we tell the
-                // server to advertise the 'newSubscription'.  The server
-                // can't send out the 'newSubscription' advertisement until we
-                // tell it to, so that we have no race condition:  If we got
-                // the 'newSubscription' before we received the sourceId we
-                // could not tell if we are the client that is the source for
-                // receiving the corresponding 'newSubscription' below...
-                mw._emit('advertise', serverSourceId);
-
-                // TODO: add a client initiated removeSource interface
-            }
+            // TODO: add a client initiated removeSource interface
+        }
     );
 
     // For Client code initiated unsubscribe.  The server sends
-    // 'removeSubscription' events for when subscription become unavailable.
+    // 'removeSource' events for when subscription become unavailable.
     mw.unsubscribe = function(sourceId) {
 
         // TODO: More code here.
@@ -954,7 +958,7 @@ function mw_client(
     };
 
 
-    mw._subscribeType = function(id) {
+    function _subscribeType(id) {
 
         // (unsubscribed), (reading), (writing), or (reading/writing)
         var type = '';
@@ -987,7 +991,7 @@ function mw_client(
             // mw.recvCalls[sourceId] will be defined if and only if
             // we are subscribed.
             console.log('   "' + mw.subscriptions[id].shortName +
-                    '" (' + mw._subscribeType(id) + ')');
+                    '" (' + _subscribeType(id) + ')');
                     });
 
             if(notGotOne)
@@ -1019,20 +1023,20 @@ function mw_client(
             };
 
             // Subscribe or not
-            mw._checkSubscribe(sourceId);
+            _checkSubscribe(sourceId);
         }
     );
 
-    mw.on('removeSubscription', function(sourceId) {
+    mw.on('removeSource', function(sourceId) {
 
-        console.log('MW got removeSubscription ' + sourceId);
+        console.log('MW got removeSource ' + sourceId);
         mw.unsubscribe(sourceId);
     });
 
 
     mw.removeSource = function(sourceId, func = null) {
 
-        mw_emit('removeSubscription', sourceId);
+        mw_emit('removeSource', sourceId);
     };
 
 
