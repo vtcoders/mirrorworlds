@@ -16,6 +16,8 @@ mw_server: mw_server.js GNUmakefile $(top_srcdir)/config.make
 	cat $$i >> $@; done &&\
         chmod 755 $@) || (rm -f $@ ; exit 1)
 
+# Remove these files for cleaner and distclean target
+CLEANERFILES := package-lock.json
 
 # Where to install files from this directory
 INSTALL_DIR = $(PREFIX)/lib
