@@ -782,6 +782,7 @@ function mw_client(
 
     mw.onopen = function(e) {
 
+        // Currently a no opt.
         console.log('MW connected to ' + mw.url);
     };
 
