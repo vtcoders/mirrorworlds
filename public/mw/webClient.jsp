@@ -421,6 +421,11 @@ function init() {
 						// Get the light bulb element in the scene
 						var lightBulb = getElementById("mw__" + id);
 
+						if (!lightBulb) {
+
+							break;
+						}
+
 						// Get material for that object
                			var mat = lightBulb.getElementsByTagName("Material");
 

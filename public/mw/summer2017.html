@@ -3,7 +3,9 @@
 <head>
     <meta charset="utf-8"/>
     <title>Mirror Worlds</title>
-    <link rel="stylesheet" type="text/css" href="index.css">
+    <!--<link rel="stylesheet" type="text/css" href="index.css">-->
+	<link rel="stylesheet" type="text/css" href="css/bootstrap-min.js">
+	<script src="js/bootstrap.min.js"></script>
     <script>
         function main()
         {
@@ -12,10 +14,30 @@
         }
     </script>
 </head>
+
 <body onload="main();">
-    
-	<div id="topNav">
-		<h1>Mirror Worlds Online</h1>
+	<nav class="navbar navbar-inverse navbar-fixed-top">
+    	<div class="container">
+        	<div class="navbar-header">
+          		<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            		<span class="sr-only">Toggle navigation</span>
+           		 	<span class="icon-bar"></span>
+            		<span class="icon-bar"></span>
+            		<span class="icon-bar"></span>
+          		</button>
+         		<a class="navbar-brand" href="#">Mirror Worlds Online</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="summer2017.html">Summer 2017</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+
+		<h1>Mirror Worlds Online - Summer 2017</h1>
 
    	 	<p>Your Mirror Worlds Service is up and running.
     	  This page is a temporary index page to
